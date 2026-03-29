@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Layout, AlignLeft, DollarSign, Tag, Calendar, Send } from 'lucide-react';
 import axios from 'axios';
-
+import API from '../api/axios';
 const CreateProjectModal = ({ isOpen, onClose, refreshProjects }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -23,7 +23,7 @@ const CreateProjectModal = ({ isOpen, onClose, refreshProjects }) => {
         tags: formData.tags.split(',').map(tag => tag.trim())
       };
 
-      await axios.post('http://localhost:5000/api/projects', projectData, config);
+     await API.post('/projects', projectData, config);
       onClose(); // Modal band karo
       refreshProjects(); // List update karo
       setFormData({ title: '', description: '', budget: '', tags: '', deadline: '' }); // Reset

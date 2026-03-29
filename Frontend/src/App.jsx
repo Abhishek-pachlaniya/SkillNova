@@ -7,6 +7,7 @@ import DashboardHome from './pages/DashboardHome';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProjectForm from './pages/ProjectForm';
 import ProjectDetail from './pages/ProjectDetail';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -28,6 +29,8 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<DashboardHome />} />
+
+          <Route path="/profile" element={<Profile />} />
           
           <Route path="/projects" element={
             <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">

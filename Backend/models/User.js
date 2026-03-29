@@ -9,9 +9,16 @@ const userSchema = new mongoose.Schema({
         enum: ['client', 'engineer'], 
         default: 'engineer' 
     },
-    skills: [String],
-    bio: String,
-    resumeUrl: String,
+    
+    avatar: { type: String, default: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' },
+    bio: { type: String, maxLength: 500 },
+    skills: [{ type: String, trim: true }], // Array of skills
+    experience: { type: String }, // e.g. "2+ years"
+    location: { type: String },
+    githubUrl: { type: String },
+    linkedinUrl: { type: String },
+    websiteUrl: { type: String },
+    hourlyRate: { type: Number, default: 0 }, // Barter value calculation ke liye
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

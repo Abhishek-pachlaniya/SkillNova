@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import userRoutes from './routes/userRoutes.js'
 // Environment variables load karo
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json()); // Body parser
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/users',userRoutes);
 app.get('/', (req, res) => {
     res.send('AI Freelance Platform API is running...');
 });
