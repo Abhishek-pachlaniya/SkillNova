@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // 👈 Navigate import kiya
-import { Plus, Briefcase, Clock, Users, Edit3, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Briefcase, Clock, Users, Edit3, Trash2, ChevronRight } from 'lucide-react'; // 👈 Trash2 import kiya
 
 const DashboardHome = () => {
   const [projects, setProjects] = useState([]);
-  const navigate = useNavigate(); // 👈 Hook initialize kiya
+  const navigate = useNavigate();
 
   const fetchProjects = async () => {
     try {
@@ -15,6 +15,36 @@ const DashboardHome = () => {
       });
       setProjects(res.data);
     } catch (err) { console.log(err); }
+  };
+
+  const StatCard = ({icon, label, value, color}) => (
+  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-5">
+    <div className={`p-4 bg-${color}-50 text-${color}-600 rounded-2xl`}>{icon}</div>
+    <div>
+      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</p>
+      <h3 className="text-3xl font-black text-slate-900">{value}</h3>
+    </div>
+  </div>
+);
+
+  // 🗑️ Project Delete Function
+  const handleDelete = async (e, id) => {
+    e.stopPropagation(); // Taaki detail page na khul jaye
+    
+    if (window.confirm("Bhai, pakka delete karna hai? Ye wapas nahi aayega!")) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.delete(`http://localhost:5000/api/projects/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // List refresh karo delete ke baad
+        fetchProjects(); 
+        alert("Project udd gaya! 🚀");
+      } catch (err) {
+        alert(err.response?.data?.message || "Delete fail ho gaya lala");
+      }
+    }
   };
 
   useEffect(() => { fetchProjects(); }, []);
@@ -27,7 +57,6 @@ const DashboardHome = () => {
           <h1 className="text-4xl font-[1000] text-slate-900 tracking-tighter italic">Project Control Center</h1>
           <p className="text-slate-500 font-medium">Manage your requirements and AI matches</p>
         </div>
-        {/* Modal ki jagah seedha Add Page ka link */}
         <button 
           onClick={() => navigate('/projects/add')}
           className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black flex items-center gap-2 hover:bg-indigo-700 transition shadow-xl shadow-indigo-100"
@@ -56,11 +85,11 @@ const DashboardHome = () => {
               <div 
                 key={p._id} 
                 className="p-6 flex justify-between items-center hover:bg-slate-50/80 transition group cursor-pointer"
-                onClick={() => navigate(`/projects/${p._id}`)} // 👈 Click pe Detail page
+                onClick={() => navigate(`/projects/${p._id}`)}
               >
                 <div className="flex items-center gap-6">
                    <div className="hidden sm:flex w-12 h-12 bg-indigo-50 rounded-2xl items-center justify-center text-indigo-600 font-bold">
-                      {p.title.charAt(0)}
+                      {p.title.charAt(0).toUpperCase()}
                    </div>
                    <div>
                     <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition text-lg leading-tight">{p.title}</h4>
@@ -74,13 +103,13 @@ const DashboardHome = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-8">
-                  <div className="text-right hidden sm:block">
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden sm:block mr-4">
                     <p className="text-sm font-black text-slate-900">${p.budget}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{p.status}</p>
                   </div>
                   
-                  {/* Edit Button - StopPropagation zaroori hai taaki sirf edit khule detail nahi */}
+                  {/* Edit Button */}
                   <button 
                     onClick={(e) => {
                       e.stopPropagation(); 
@@ -89,6 +118,14 @@ const DashboardHome = () => {
                     className="p-3 hover:bg-white hover:shadow-md rounded-xl text-slate-400 hover:text-indigo-600 transition"
                   >
                     <Edit3 size={18} />
+                  </button>
+
+                  {/* 🗑️ Delete Button */}
+                  <button 
+                    onClick={(e) => handleDelete(e, p._id)} // 👈 Ye handleDelete function upar define karna padega
+                    className="p-3 hover:bg-red-50 hover:shadow-md rounded-xl text-slate-400 hover:text-red-600 transition"
+                  >
+                    <Trash2 size={18} />
                   </button>
 
                   <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
@@ -100,17 +137,6 @@ const DashboardHome = () => {
       </div>
     </div>
   );
-};
 
-// Reusable StatCard Component
-const StatCard = ({icon, label, value, color}) => (
-  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 hover:border-indigo-100 transition">
-    <div className={`p-4 bg-slate-50 text-indigo-600 rounded-2xl`}>{icon}</div>
-    <div>
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-      <h3 className="text-3xl font-black text-slate-900">{value}</h3>
-    </div>
-  </div>
-);
-
+}
 export default DashboardHome;
