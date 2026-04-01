@@ -1,43 +1,32 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext'; // 👈 Context import kiya
 import { 
   LogOut, LayoutDashboard, Users, FileText, Settings, 
-  Menu, Bell, Search, ChevronRight, X 
+  Menu, Bell, Search, ChevronRight, X, Briefcase
 } from 'lucide-react';
 
-// 1. Helper function ko component ke bahar rakho
-const getSafeUser = () => {
-  try {
-    const savedUser = localStorage.getItem('user');
-    if (!savedUser || savedUser === "undefined" || savedUser === "null") {
-      return { name: 'Guest', role: 'User' };
-    }
-    return JSON.parse(savedUser);
-  } catch (err) {
-    return { name: 'Guest', role: 'User' };
-  }
-};
-
 export default function DashboardLayout({ children }) {
+  const { user, logout } = useAuth(); // 👈 Context se live data liya
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 2. Component ke andar data yahan se uthao
-  const userData = getSafeUser();
-  const userName = userData.name || 'User';
-  const userRole = userData.role || 'Member';
+  // ✅ Ab ye data Context se aa raha hai, isliye update hone par turant badlega
+  const userName = user?.name || 'Guest';
+  const userRole = user?.role || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout();
     navigate('/');
   };
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
     { name: 'Projects', icon: <FileText size={20} />, path: '/projects' },
+    { name: 'My Projects', icon: <Briefcase size={20} />, path: '/my-projects' },
     { name: 'Engineers', icon: <Users size={20} />, path: '/engineers' },
     { name: 'Settings', icon: <Settings size={20} />, path: '/settings' },
   ];

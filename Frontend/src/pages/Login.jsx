@@ -2,32 +2,39 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../api/axios'; // 1. Localhost ki jagah apna axios instance use karo
 import { Mail, Lock, Loader2 } from 'lucide-react'; // Ek loader icon bhi add kar diya
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); // 2. Loading state for UX
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // 3. Simple URL (Base URL .env se aayega)
       const res = await API.post('/auth/login', { email, password });
       
-      // 4. Sabse important: Token aur User dono save karo
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user)); 
+      // ✅ Sahi Tarika: Backend se user aur token dono lo
+      const { user, token } = res.data;
+
+      if (!user || !user.role) {
+        alert("Backend se user role nahi mila!");
+        return;
+      }
+
+      // ✅ Context ka login function call karo (Ye storage + state dono sambhal lega)
+      login(user, token); 
       
       navigate('/dashboard');
     } catch (err) {
-      // Backend se jo error message aaye wahi dikhao
-      alert(err.response?.data?.message || "Bhai, credentials check kar le!");
+      alert(err.response?.data?.message || "Credentials check kar le bhai!");
     } finally {
       setLoading(false);
     }
-  };
+};
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">

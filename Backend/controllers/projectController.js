@@ -1,33 +1,35 @@
 import Project from '../models/Project.js';
 
-// @desc    Create a new project
+// @desc    Create a new project (Merge Version)
 // @route   POST /api/projects
 export const createProject = async (req, res) => {
     try {
-        const { title, description, tags, budget, deadline } = req.body;
+        // Frontend se aane waali saari possible fields
+        const { title, description, tags, skills, budget, deadline } = req.body;
 
-        // Ensure user is a client (optional check if you want)
+        // 1. Security Check: Sirf 'client' hi post kar sake
         if (req.user.role !== 'client') {
-            return res.status(403).json({ message: 'Only clients can post projects' });
+            return res.status(403).json({ message: 'Forbidden: Only clients can post projects' });
         }
 
+        // 2. Project Creation
+        // Note: 'tags' aur 'skills' dono rakhe hain taaki frontend se jo bhi aaye handle ho jaye
         const project = await Project.create({
             title,
             description,
-            tags,
+            tags: tags || skills, // Agar tags nahi toh skills use kar lo
             budget,
             deadline,
-            clientId: req.user._id // Middleware se aa raha hai
+            clientId: req.user._id // Middleware (protect) se aa raha hai
         });
 
         res.status(201).json(project);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error', error: error.message });
+        res.status(400).json({ message: "Project creation failed", error: error.message });
     }
 };
 
 // @desc    Get all projects
-// @route   GET /api/projects
 export const getAllProjects = async (req, res) => {
     try {
         const projects = await Project.find().populate('clientId', 'name email');
@@ -38,7 +40,6 @@ export const getAllProjects = async (req, res) => {
 };
 
 // @desc    Get Single Project by ID
-// @route   GET /api/projects/:id
 export const getProjectById = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id).populate('clientId', 'name email');
@@ -49,37 +50,46 @@ export const getProjectById = async (req, res) => {
     }
 };
 
-// @desc    Update a project
-// @route   PUT /api/projects/:id
+/// projectController.js mein update function
 export const updateProject = async (req, res) => {
     try {
-        const project = await Project.findById(req.params.id);
+        const { id } = req.params; // Project ID
+        const userId = req.user._id; // Logged-in User ID (from auth middleware)
 
-        if (!project) return res.status(404).json({ message: 'Project not found' });
+        // 1. Pehle project dhundo
+        const project = await Project.findById(id);
 
-        // Check karo ki wahi client update kar raha hai jisne banaya tha
-        if (project.clientId.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ message: 'User not authorized to update this project' });
+        if (!project) {
+            return res.status(404).json({ msg: "Project nahi mila!" });
         }
 
+        // 2. 🔥 CHECK: Kya ye wahi user hai jisne project banaya tha?
+        // Hum check kar rahe hain ki Project ki 'client' field aur logged-in user ki ID match karti hai ya nahi
+        if (project.client.toString() !== userId.toString()) {
+            return res.status(403).json({ 
+                msg: "Bhai, ye tera project nahi hai! Tu ise update nahi kar sakta. 😂" 
+            });
+        }
+
+        // 3. Agar owner hai, tabhi update hone do
         const updatedProject = await Project.findByIdAndUpdate(
-            req.params.id,
-            { $set: req.body }, // Jo bhi fields aayi hain unhe update kar do
-            { new: true } // Updated document wapas chahiye
+            id, 
+            { $set: req.body }, 
+            { new: true }
         );
 
         res.json(updatedProject);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error', error: error.message });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Server Error");
     }
 };
 
 // @desc    Delete a project
-// @route   DELETE /api/projects/:id
 export const deleteProject = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
-
         if (!project) return res.status(404).json({ message: 'Project not found' });
 
         if (project.clientId.toString() !== req.user._id.toString()) {
@@ -90,5 +100,19 @@ export const deleteProject = async (req, res) => {
         res.json({ message: 'Project removed successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+export const getMyProjects = async (req, res) => {
+    try {
+        // req.user._id humein 'protect' middleware se mil raha hai
+        const projects = await Project.find({ clientId: req.user._id }); 
+        
+        res.status(200).json(projects);
+    } catch (error) {
+        res.status(500).json({ 
+            message: 'Error fetching your projects', 
+            error: error.message 
+        });
     }
 };
