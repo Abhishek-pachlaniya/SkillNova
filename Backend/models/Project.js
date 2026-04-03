@@ -16,7 +16,28 @@ const projectSchema = new mongoose.Schema({
         enum: ['open', 'in-progress', 'completed'], 
         default: 'open' 
     },
-    applicants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    // ✅ YAHAN CHANGE KIYA HAI: Ab har applicant ka apna status hoga
+    // models/Project.js mein applicants array ko aisa kar de:
+applicants: [
+    {
+        user: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'User',
+            required: true
+        },
+        proposalText: { type: String }, // 👈 NAYA: Proposal save karne ke liye
+        bidAmount: { type: Number },    // 👈 NAYA: Bid amount save karne ke liye
+        status: { 
+            type: String, 
+            enum: ['pending', 'interviewing', 'hired', 'rejected'], 
+            default: 'pending' 
+        },
+        appliedAt: { 
+            type: Date, 
+            default: Date.now 
+        }
+    }
+]
 }, { timestamps: true });
 
 const Project = mongoose.model('Project', projectSchema);

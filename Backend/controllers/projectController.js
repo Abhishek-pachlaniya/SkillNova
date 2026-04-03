@@ -116,3 +116,48 @@ export const getMyProjects = async (req, res) => {
         });
     }
 };
+
+// controllers/projectControllers.js mein ye function add karo
+
+export const getEngineerProjects = async (req, res) => {
+  try {
+    // 💡 Logic: Humein wo projects chahiye jahan engineer ne apply kiya hai
+    // Hum "Application" model se fetch karenge ya Project model mein applicants array se
+    const projects = await Project.find({
+      "applicants.user": req.user._id 
+    });
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: "Projects fetch nahi ho paye!", error: error.message });
+  }
+};
+// Apply for a project (Engineer side)
+export const applyForProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    
+    if (!project) return res.status(404).json({ message: "Project nahi mila!" });
+
+    // Check if already applied
+    const alreadyApplied = project.applicants.find(
+      (app) => app.user.toString() === req.user._id.toString()
+    );
+
+    if (alreadyApplied) {
+      return res.status(400).json({ message: "Bhai, pehle hi apply kar chuke ho!" });
+    }
+
+    // ✅ Naye schema ke hisaab se data push karo
+    project.applicants.push({
+      user: req.user._id,
+      status: 'pending' // Default status
+    });
+
+    await project.save();
+    res.json({ message: "Successfully applied! 🎉" });
+
+  } catch (error) {
+    res.status(500).json({ message: "Apply nahi ho paya lala!", error: error.message });
+  }
+};

@@ -30,6 +30,7 @@ const ProjectDetail = () => {
   }, [id]);
 
   // 🔥 SEND PROPOSAL LOGIC
+  // 🔥 SEND PROPOSAL LOGIC (UPDATED)
   const handleSendProposal = async () => {
     if (!proposalText || !bidAmount) {
       return alert("Bhai, details toh bhar de pehle!");
@@ -37,10 +38,11 @@ const ProjectDetail = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/interviews/request-interview', 
+      // 👉 YAHAN CHANGE KIYA HAI: Sahi endpoint aur body bheji hai
+      await axios.post(`http://localhost:5000/api/projects/${id}/apply`, 
         { 
-          engineerId: project.client, 
-          message: `Proposal: ${proposalText} | Bid: $${bidAmount}` 
+          proposalText: proposalText, 
+          bidAmount: Number(bidAmount) // Backend ko number chahiye
         }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -50,7 +52,7 @@ const ProjectDetail = () => {
       setProposalText("");
       setBidAmount("");
     } catch (err) {
-      alert(err.response?.data?.msg || "Proposal bhejne mein gadbad hui!");
+      alert(err.response?.data?.message || "Proposal bhejne mein gadbad hui!");
     }
   };
 

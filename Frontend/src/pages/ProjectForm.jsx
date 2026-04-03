@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Save, Sparkles } from 'lucide-react';
-import axios from 'axios';
+import API from '../api/axios'; // 👈 Custom axios instance import kiya
 
 const ProjectForm = () => {
-  const { id } = useParams(); // Agar update hai toh id milegi
+  const { id } = useParams(); 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -13,20 +13,21 @@ const ProjectForm = () => {
 
   useEffect(() => {
     if (id) {
-      // Edit mode: Purana data fetch karo
       const fetchProject = async () => {
-        const token = localStorage.getItem('token');
-        const res = await axios.get(`http://localhost:5000/api/projects/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = res.data;
-        setFormData({
-          title: data.title,
-          description: data.description,
-          budget: data.budget,
-          tags: data.tags.join(', '),
-          deadline: data.deadline ? data.deadline.split('T')[0] : ''
-        });
+        try {
+          // 👈 Ab seedha API.get use karo
+          const res = await API.get(`/projects/${id}`);
+          const data = res.data;
+          setFormData({
+            title: data.title,
+            description: data.description,
+            budget: data.budget,
+            tags: data.tags.join(', '),
+            deadline: data.deadline ? data.deadline.split('T')[0] : ''
+          });
+        } catch (err) {
+          console.error("Error fetching project", err);
+        }
       };
       fetchProject();
     }
@@ -36,18 +37,17 @@ const ProjectForm = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
       const data = { ...formData, tags: formData.tags.split(',').map(t => t.trim()) };
 
+      // 👈 Localhost hata kar apna API instance lagaya
       if (id) {
-        await axios.put(`http://localhost:5000/api/projects/${id}`, data, config);
+        await API.put(`/projects/${id}`, data);
       } else {
-        await axios.post('http://localhost:5000/api/projects', data, config);
+        await API.post('/projects', data);
       }
-      navigate('/dashboard');
+      navigate('/dashboard'); // Post hone ke baad wapas bhej do
     } catch (err) {
-      alert("Error saving project");
+      alert("Error saving project lala!");
     } finally { setLoading(false); }
   };
 
@@ -78,7 +78,8 @@ const ProjectForm = () => {
                 onChange={(e) => setFormData({...formData, description: e.target.value})} />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            {/* 3 Columns kar diye taaki Budget, Tags aur Deadline teeno aa jayein */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Budget ($)</label>
                 <input type="number" required value={formData.budget}
@@ -87,9 +88,16 @@ const ProjectForm = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tags (Skills)</label>
-                <input type="text" value={formData.tags}
+                <input type="text" placeholder="React, Node, AI" value={formData.tags}
                   className="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
                   onChange={(e) => setFormData({...formData, tags: e.target.value})} />
+              </div>
+              {/* 👈 YAHAN ADD KIYA HAI DEADLINE INPUT */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Deadline</label>
+                <input type="date" value={formData.deadline}
+                  className="w-full p-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-slate-600"
+                  onChange={(e) => setFormData({...formData, deadline: e.target.value})} />
               </div>
             </div>
           </div>
