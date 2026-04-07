@@ -6,10 +6,12 @@ import {
   FaMapMarkerAlt, FaSave, FaBriefcase, FaCode, FaCamera 
 } from 'react-icons/fa';
 import { MdOutlineWorkHistory } from 'react-icons/md';
+import { Sparkles } from 'lucide-react'; // 🔥 Naya Icon import kiya
 
 const Profile = () => {
   const { updateUserData, user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false); // 🔥 Nayi state AI loading ke liye
   const [userRole, setUserRole] = useState('engineer');
   const [imageFile, setImageFile] = useState(null); 
   const [previewUrl, setPreviewUrl] = useState(null); 
@@ -86,6 +88,21 @@ const Profile = () => {
     } finally { setLoading(false); }
   };
 
+  // 🔥 NAYA FUNCTION: AI Embedding generate karne ke liye
+  const handleGenerateAI = async () => {
+    try {
+      setAiLoading(true);
+      // Backend ke AI route par request bhej rahe hain
+      const res = await API.post('/ai/index-profile');
+      alert(res.data.message || "AI Profile Indexed Successfully! 🚀");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "AI Sync failed. Pura form save karo pehle!");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-0 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="bg-white rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/50">
@@ -147,9 +164,26 @@ const Profile = () => {
                 <SocialInput icon={<FaGithub />} placeholder="GitHub URL" value={formData.githubUrl} onChange={(val) => setFormData({...formData, githubUrl: val})} />
                 <SocialInput icon={<FaLinkedin />} placeholder="LinkedIn URL" value={formData.linkedinUrl} onChange={(val) => setFormData({...formData, linkedinUrl: val})} />
               </div>
+              
               <button type="submit" disabled={loading} className={`w-full mt-10 py-5 rounded-2xl font-black text-lg shadow-xl flex items-center justify-center gap-3 active:scale-95 group ${userRole === 'engineer' ? 'bg-indigo-600 text-white' : 'bg-emerald-600 text-white'}`}>
                 {loading ? <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div> : <>Save Details <FaSave /></>}
               </button>
+
+              {/* 🔥 AI SYNC BUTTON (Sirf Engineers ke liye) 🔥 */}
+              {userRole === 'engineer' && (
+                <button 
+                  type="button" 
+                  onClick={handleGenerateAI}
+                  disabled={aiLoading} 
+                  className="w-full mt-4 py-5 rounded-2xl font-black text-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl shadow-purple-200 flex items-center justify-center gap-3 active:scale-95 group hover:from-purple-700 hover:to-indigo-700 transition-all"
+                >
+                  {aiLoading ? (
+                    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>Sync Profile with AI Engine <Sparkles size={20} className="text-amber-300" /></>
+                  )}
+                </button>
+              )}
             </div>
           </form>
         </div>

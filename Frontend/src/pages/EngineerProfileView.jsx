@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../api/axios';
-// Saare icons ko Lucide object mein le liya taaki import error na aaye
-import * as Lucide from 'lucide-react';
+
+// 🚨 FIX 1: Humne explicit icons import kiye hain, wildcard (*) hata diya hai
+import { ArrowLeft, Sparkles, Briefcase, MapPin, Mail, Globe, User, Code } from 'lucide-react';
+
+// 🚨 FIX 2: Helper component ko top par rakh diya taaki undefined na aaye
+const StatusItem = ({ label, status }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-slate-500 font-bold text-sm">{label}</span>
+    {status ? (
+      <span className="bg-emerald-100 text-emerald-600 text-[10px] font-black px-2 py-1 rounded-md">VERIFIED</span>
+    ) : (
+      <span className="bg-slate-200 text-slate-500 text-[10px] font-black px-2 py-1 rounded-md">PENDING</span>
+    )}
+  </div>
+);
 
 export default function EngineerProfileView() {
   const { id } = useParams();
@@ -22,21 +35,17 @@ export default function EngineerProfileView() {
         setLoading(false);
       }
     };
-   
+    
     fetchEngineer();
   }, [id]);
   
 
-    const handleRequestInterview = async () => {
+  const handleRequestInterview = async () => {
     try {
       setRequestSending(true);
-      
-      // Backend route: /api/interviews/request-interview
-      // Body mein engineerId bhej rahe hain
       const res = await API.post('/interviews/request-interview', { 
         engineerId: id 
       });
-
       alert(res.data.msg || "Request bhej di gayi hai!");
     } catch (err) {
       console.error(err);
@@ -69,7 +78,7 @@ export default function EngineerProfileView() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-slate-500 hover:text-indigo-600 font-bold transition-colors group"
         >
-          <Lucide.ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to Applicants
+          <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to Applicants
         </button>
       </div>
 
@@ -96,31 +105,30 @@ export default function EngineerProfileView() {
             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div>
                 <h1 className="text-5xl font-[1000] text-slate-900 tracking-tight flex items-center gap-3">
-                  {engineer.name} <Lucide.Sparkles className="text-amber-400" size={32} />
+                  {engineer.name} <Sparkles className="text-amber-400" size={32} />
                 </h1>
                 <div className="flex flex-wrap items-center gap-6 mt-4 text-slate-500 font-bold">
                   <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
-                    <Lucide.Briefcase size={16} className="text-indigo-600" /> {engineer.experience || '0'} Years Experience
+                    <Briefcase size={16} className="text-indigo-600" /> {engineer.experience || '0'} Years Experience
                   </span>
                   <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
-                    <Lucide.MapPin size={16} className="text-rose-500" /> {engineer.location || 'Remote'}
+                    <MapPin size={16} className="text-rose-500" /> {engineer.location || 'Remote'}
                   </span>
                   <span className="flex items-center gap-2 bg-slate-100 px-3 py-1 rounded-full text-sm">
-                    <Lucide.Mail size={16} className="text-emerald-500" /> {engineer.email}
+                    <Mail size={16} className="text-emerald-500" /> {engineer.email}
                   </span>
                 </div>
               </div>
-
               {/* Social Links */}
               <div className="flex gap-3">
                 {engineer.githubUrl && (
-                  <a href={engineer.githubUrl} target="_blank" rel="noreferrer" className="p-4 bg-slate-900 text-white rounded-2xl hover:scale-110 transition-transform">
-                    <Lucide.Github size={24} />
+                  <a href={engineer.githubUrl} target="_blank" rel="noreferrer" className="p-4 bg-slate-900 text-white rounded-2xl hover:scale-110 transition-transform flex items-center gap-2 font-bold">
+                    <Code size={20} /> GitHub
                   </a>
                 )}
                 {engineer.linkedinUrl && (
-                  <a href={engineer.linkedinUrl} target="_blank" rel="noreferrer" className="p-4 bg-[#0077b5] text-white rounded-2xl hover:scale-110 transition-transform">
-                    <Lucide.Linkedin size={24} />
+                  <a href={engineer.linkedinUrl} target="_blank" rel="noreferrer" className="p-4 bg-[#0077b5] text-white rounded-2xl hover:scale-110 transition-transform flex items-center gap-2 font-bold">
+                    <Globe size={20} /> LinkedIn
                   </a>
                 )}
               </div>
@@ -131,7 +139,7 @@ export default function EngineerProfileView() {
               <div className="lg:col-span-2 space-y-12">
                 <section>
                   <h3 className="text-xs font-black uppercase tracking-[0.3em] text-indigo-600 mb-4 flex items-center gap-2">
-                    <Lucide.User size={16} /> Professional Bio
+                    <User size={16} /> Professional Bio
                   </h3>
                   <p className="text-xl text-slate-600 leading-relaxed font-medium">
                     {engineer.bio || "Bhai ne abhi tak kuch likha nahi hai apne baare mein."}
@@ -140,14 +148,14 @@ export default function EngineerProfileView() {
 
                 <section>
                   <h3 className="text-xs font-black uppercase tracking-[0.3em] text-indigo-600 mb-6 flex items-center gap-2">
-                    <Lucide.Code2 size={16} /> Tech Stack & Mastery
+                    <Code size={16} /> Tech Stack & Mastery
                   </h3>
                   <div className="flex flex-wrap gap-3">
                     {engineer.skills?.length > 0 ? (
                       engineer.skills.map((skill, i) => (
                         <div key={i} className="group relative">
                           <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-fuchsia-500 rounded-2xl blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
-                          <span className="relative bg-white border-2 border-slate-100 text-slate-700 px-6 py-3 rounded-2xl font-black text-sm block shadow-sm">
+                          <span className="relative bg-white border-2 border-slate-100 text-slate-700 px-6 py-3 rounded-2xl font-black text-sm block shadow-sm truncate max-w-[250px] inline-block">
                             {skill}
                           </span>
                         </div>
@@ -189,15 +197,3 @@ export default function EngineerProfileView() {
     </div>
   );
 }
-
-// Helper Component for Verification List
-const StatusItem = ({ label, status }) => (
-  <div className="flex items-center justify-between">
-    <span className="text-slate-500 font-bold text-sm">{label}</span>
-    {status ? (
-      <span className="bg-emerald-100 text-emerald-600 text-[10px] font-black px-2 py-1 rounded-md">VERIFIED</span>
-    ) : (
-      <span className="bg-slate-200 text-slate-500 text-[10px] font-black px-2 py-1 rounded-md">PENDING</span>
-    )}
-  </div>
-);

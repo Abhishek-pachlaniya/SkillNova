@@ -21,7 +21,12 @@ const userSchema = new mongoose.Schema({
     portfolioUrl: { type: String, default: '' },
     
     hourlyRate: { type: Number, default: 0 }, 
-    completedProjects: { type: Number, default: 0 }
+    completedProjects: { type: Number, default: 0 },
+    // models/User.js mein baki fields ke sath ye add kar
+    profileEmbedding: { 
+    type: [Number], // Ye array of numbers hoga (Vector)
+    default: [] 
+},
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);

@@ -13,7 +13,8 @@ import Projects from './pages/Projects';
 import MyProjects from './pages/MyProjects';
 import ApplicantsList from './pages/ApplicantsList';
 import EngineerProfileView from './pages/EngineerProfileView';
-
+import Engineers from './pages/Engineers'
+import Chat from './pages/chat';
 function App() {
   return (
     /* 🌐 Step 2: Poore App ko AuthProvider mein lapet diya */
@@ -37,6 +38,7 @@ function App() {
           >
             <Route path="/dashboard" element={<DashboardHome />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/engineers" element={<Engineers />} />
             <Route path="/engineer-profile/:id" element={<EngineerProfileView />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/my-projects" element={<MyProjects />} /> 
@@ -44,6 +46,7 @@ function App() {
             <Route path="/projects/add" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />
             <Route path="/projects/edit/:id" element={<ProjectForm />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
 
           {/* 🚫 404 - Redirect to Landing */}

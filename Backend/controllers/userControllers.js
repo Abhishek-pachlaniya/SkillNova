@@ -85,3 +85,16 @@ export const getPublicProfile = async (req, res) => {
     res.status(500).json({ message: "Server error: Profile fetch nahi ho payi." });
   }
 };
+// userControllers.js ke sabse neeche ye add kar
+
+// 4. Get All Engineers (For AI Search Page default view)
+export const getAllEngineers = async (req, res) => {
+  try {
+    // Database se saare engineers uthao, par unka password mat bhejna
+    const engineers = await User.find({ role: 'engineer' }).select('-password');
+    res.json(engineers);
+  } catch (err) {
+    console.error("Fetch Engineers Error:", err);
+    res.status(500).json({ message: "Server error: Engineers fetch nahi ho paye." });
+  }
+};

@@ -136,14 +136,28 @@ const DashboardHome = () => {
 };
 
 // 📊 Responsive StatCard Component
-const StatCard = ({icon, label, value, color}) => (
-  <div className="bg-white p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 md:gap-5 hover:border-indigo-100 transition">
-    <div className={`p-3 md:p-4 bg-${color}-50 text-${color}-600 rounded-2xl flex-shrink-0`}>{icon}</div>
-    <div className="min-w-0">
-      <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest truncate">{label}</p>
-      <h3 className="text-2xl md:text-3xl font-black text-slate-900">{value}</h3>
+// 📊 Responsive StatCard Component
+const StatCard = ({ icon, label, value, color }) => {
+  // Tailwind ko khush rakhne ke liye full class names map karna zaroori hai
+  const colorMap = {
+    indigo: "bg-indigo-50 text-indigo-600",
+    orange: "bg-orange-50 text-orange-600",
+    green: "bg-green-50 text-green-600",
+  };
+
+  const colorClasses = colorMap[color] || "bg-slate-50 text-slate-600"; // Fallback color
+
+  return (
+    <div className="bg-white p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-4 md:gap-5 hover:border-indigo-100 transition">
+      <div className={`p-3 md:p-4 rounded-2xl flex-shrink-0 ${colorClasses}`}>
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest truncate">{label}</p>
+        <h3 className="text-2xl md:text-3xl font-black text-slate-900">{value}</h3>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default DashboardHome;
