@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Search, ArrowLeft, MoreVertical, Phone, Video, CheckCheck, Smile, Paperclip, MessageSquare } from 'lucide-react';
+import { Send, Search, ArrowLeft, MoreVertical, Phone, Video, CheckCheck, Smile, Paperclip, MessageSquare, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext'; 
 import axios from 'axios';
@@ -19,8 +19,9 @@ export default function Chat() {
   const messagesEndRef = useRef(null);
 
   const fetchConversations = useCallback(async () => {
+    // FIX: Safely check for token
     const token = user?.token || localStorage.getItem('token');
-    if (!token) return; 
+    if (!token || !user) return; 
 
     try {
       const res = await axios.get('http://localhost:5000/api/conversations', {
@@ -33,8 +34,8 @@ export default function Chat() {
   }, [user]);
 
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    if (user) fetchConversations();
+  }, [fetchConversations, user]);
 
   useEffect(() => {
     if (location.state?.newChat) {
@@ -44,7 +45,7 @@ export default function Chat() {
   }, [location.state]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !user) return;
 
     const handleReceive = (incomingMessage) => {
       if (activeContact && String(incomingMessage.conversationId) === String(activeContact._id)) {
@@ -60,10 +61,10 @@ export default function Chat() {
 
     socket.on("receiveMessage", handleReceive);
     return () => socket.off("receiveMessage", handleReceive);
-  }, [socket, activeContact, fetchConversations]);
+  }, [socket, activeContact, fetchConversations, user]);
 
   useEffect(() => {
-    if (activeContact && socket) {
+    if (activeContact && socket && user) {
       socket.emit("joinChatRoom", activeContact._id);
 
       const fetchMessages = async () => {
@@ -73,9 +74,7 @@ export default function Chat() {
             headers: { Authorization: `Bearer ${token}` }
           });
           const formattedMessages = res.data.map(m => {
-            // FIX: Safely extract ID whether it's an object or string
             const senderId = m.sender?._id ? String(m.sender._id) : String(m.sender);
-            
             return {
               ...m,
               sender: senderId === String(user._id) ? 'me' : 'them',
@@ -140,13 +139,24 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
+  // FIX: Added guard for user object in filter
   const filteredConversations = conversations.filter(conv => {
     const otherUser = conv.participants.find(p => {
       const pId = p?._id ? String(p._id) : String(p);
-      return pId !== String(user?._id);
+      return user && pId !== String(user._id);
     });
     return otherUser?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  // CRITICAL FIX: Agar user nahi hai, toh white screen ki jagah loading dikhao
+  if (!user) {
+    return (
+      <div className="h-[calc(100vh-8rem)] w-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200">
+        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+        <p className="text-slate-500 font-medium italic">Loading your chats...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] flex overflow-hidden bg-[#f8fafc] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 animate-in fade-in duration-500">
@@ -195,7 +205,7 @@ export default function Chat() {
                   >
                     <div className="relative">
                       <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center text-indigo-700 font-bold uppercase overflow-hidden shadow-inner border border-white">
-                        {otherUser.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" /> : otherUser.name?.charAt(0)}
+                        {otherUser.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" /> : otherUser.name?.charAt(0)}
                       </div>
                       {isOnline && (
                         <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></span>
@@ -240,7 +250,7 @@ export default function Chat() {
               
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold uppercase overflow-hidden border border-slate-200 shadow-sm">
-                  {otherUser?.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" /> : otherUser?.name?.charAt(0)}
+                  {otherUser?.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" /> : otherUser?.name?.charAt(0)}
                 </div>
                 <div className="flex flex-col">
                   <h3 className="font-bold text-slate-800 text-[15px] leading-tight">{otherUser?.name}</h3>

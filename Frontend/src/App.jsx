@@ -48,6 +48,7 @@ function App() {
             <Route path="/engineer-profile/:id" element={<EngineerProfileView />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/my-projects" element={<MyProjects />} /> 
+            {/* <Route path="/projects/new" element={<CreateProject />} /> */}
             <Route path="/projects/:id/applicants" element={<ApplicantsList />} />
             <Route path="/projects/add" element={<ProjectForm />} />
             <Route path="/projects/:id" element={<ProjectDetail />} />

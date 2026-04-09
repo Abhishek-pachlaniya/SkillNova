@@ -1,39 +1,49 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Initial load: LocalStorage se data uthao
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser && savedUser !== "undefined") {
-      setUser(JSON.parse(savedUser));
+  const loadUser = useCallback(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser && savedUser !== "undefined") {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
-// AuthContext.js ke andar login function aisa hona chahiye:
-const login = (userData, token) => {
-    // 1. State update karo (Taaki Header turant badle)
-    setUser(userData);
-    
-    // 2. LocalStorage update karo (Taaki refresh par data na jaye)
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  const login = (userData, token) => {
+    const finalUser = userData.user ? userData.user : userData;
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData)); 
-};
-  // User update karne ka function
+    localStorage.setItem('user', JSON.stringify(finalUser));
+    setUser(finalUser);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.location.href = '/'; 
+  };
+
   const updateUserData = (newData) => {
     setUser(newData);
     localStorage.setItem('user', JSON.stringify(newData));
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.clear();
-  };
-
   return (
-    <AuthContext.Provider value={{ user, updateUserData, logout,login}}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUserData, checkSession: loadUser }}>
       {children}
     </AuthContext.Provider>
   );

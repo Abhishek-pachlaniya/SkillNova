@@ -7,27 +7,28 @@ import {
     deleteProject,
     getMyProjects,
     getEngineerProjects,
-    applyForProject
+    applyToProject
 } from '../controllers/projectController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// 1. Basic & Static Routes (Hamesha /:id se upar rakho)
+// Static Routes
+router.get('/my-projects', protect, getMyProjects);
+router.get('/my-applied', protect, getEngineerProjects); 
+
+// Base Routes
 router.route('/')
     .post(protect, createProject)
     .get(protect, getAllProjects);
 
-router.get('/my-projects', protect, getMyProjects);
-router.get('/my-applied', protect, getEngineerProjects); 
-
-// 2. Action Routes (Apply karne ke liye POST aur Project ID zaroori hai)
-router.post('/:id/apply', protect, applyForProject); 
-
-// 3. ID Specific Routes (Hamesha sabse last mein rakho)
+// Dynamic ID Routes
 router.route('/:id')
     .get(protect, getProjectById)
     .put(protect, updateProject)
     .delete(protect, deleteProject);
+
+// Apply Route
+router.post('/:projectId/apply', protect, applyToProject);
 
 export default router;

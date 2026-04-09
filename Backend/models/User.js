@@ -19,6 +19,8 @@ const userSchema = new mongoose.Schema({
     githubUrl: { type: String, default: '' },
     linkedinUrl: { type: String, default: '' },
     portfolioUrl: { type: String, default: '' },
+
+    appliedProjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
     
     hourlyRate: { type: Number, default: 0 }, 
     completedProjects: { type: Number, default: 0 },

@@ -1,92 +1,69 @@
 import Project from '../models/Project.js';
+import User from '../models/User.js';
 
-// @desc    Create a new project (Merge Version)
-// @route   POST /api/projects
 export const createProject = async (req, res) => {
     try {
-        // Frontend se aane waali saari possible fields
-        const { title, description, tags, skills, budget, deadline } = req.body;
-
-        // 1. Security Check: Sirf 'client' hi post kar sake
         if (req.user.role !== 'client') {
-            return res.status(403).json({ message: 'Forbidden: Only clients can post projects' });
+            return res.status(403).json({ message: 'Only clients can post projects' });
         }
-
-        // 2. Project Creation
-        // Note: 'tags' aur 'skills' dono rakhe hain taaki frontend se jo bhi aaye handle ho jaye
+        const { title, description, tags, skills, budget, deadline } = req.body;
         const project = await Project.create({
             title,
             description,
-            tags: tags || skills, // Agar tags nahi toh skills use kar lo
+            tags: tags || skills,
             budget,
             deadline,
-            clientId: req.user._id // Middleware (protect) se aa raha hai
+            clientId: req.user._id
         });
-
         res.status(201).json(project);
     } catch (error) {
         res.status(400).json({ message: "Project creation failed", error: error.message });
     }
 };
 
-// @desc    Get all projects
 export const getAllProjects = async (req, res) => {
     try {
-        const projects = await Project.find().populate('clientId', 'name email');
+        const projects = await Project.find().populate('clientId', 'name email').lean();
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
     }
 };
 
-// @desc    Get Single Project by ID
 export const getProjectById = async (req, res) => {
     try {
-        const project = await Project.findById(req.params.id).populate('clientId', 'name email');
+        const project = await Project.findById(req.params.id)
+            .populate('clientId', 'name email')
+            .populate('applicants.user', 'name email avatar skills'); 
+
         if (!project) return res.status(404).json({ message: 'Project not found' });
+        
         res.json(project);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
 
-/// projectController.js mein update function
 export const updateProject = async (req, res) => {
     try {
-        const { id } = req.params; // Project ID
-        const userId = req.user._id; // Logged-in User ID (from auth middleware)
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ message: "Project not found" });
 
-        // 1. Pehle project dhundo
-        const project = await Project.findById(id);
-
-        if (!project) {
-            return res.status(404).json({ msg: "Project nahi mila!" });
+        if (project.clientId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "Not authorized to update" });
         }
 
-        // 2. 🔥 CHECK: Kya ye wahi user hai jisne project banaya tha?
-        // Hum check kar rahe hain ki Project ki 'client' field aur logged-in user ki ID match karti hai ya nahi
-        if (project.client.toString() !== userId.toString()) {
-            return res.status(403).json({ 
-                msg: "Bhai, ye tera project nahi hai! Tu ise update nahi kar sakta. 😂" 
-            });
-        }
-
-        // 3. Agar owner hai, tabhi update hone do
         const updatedProject = await Project.findByIdAndUpdate(
-            id, 
+            req.params.id, 
             { $set: req.body }, 
             { new: true }
         );
-
         res.json(updatedProject);
-
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Server Error");
+        res.status(500).json({ message: "Server Error" });
     }
 };
 
-// @desc    Delete a project
 export const deleteProject = async (req, res) => {
     try {
         const project = await Project.findById(req.params.id);
@@ -105,59 +82,64 @@ export const deleteProject = async (req, res) => {
 
 export const getMyProjects = async (req, res) => {
     try {
-        // req.user._id humein 'protect' middleware se mil raha hai
-        const projects = await Project.find({ clientId: req.user._id }); 
-        
+        const projects = await Project.find({ clientId: req.user._id }).lean(); 
         res.status(200).json(projects);
     } catch (error) {
-        res.status(500).json({ 
-            message: 'Error fetching your projects', 
-            error: error.message 
-        });
+        res.status(500).json({ message: 'Error fetching projects' });
     }
 };
-
-// controllers/projectControllers.js mein ye function add karo
 
 export const getEngineerProjects = async (req, res) => {
   try {
-    // 💡 Logic: Humein wo projects chahiye jahan engineer ne apply kiya hai
-    // Hum "Application" model se fetch karenge ya Project model mein applicants array se
-    const projects = await Project.find({
-      "applicants.user": req.user._id 
+    const userId = req.user._id;
+    const projects = await Project.find({ applications: userId }).lean();
+
+    const projectsWithStatus = projects.map(project => {
+      const myApp = project.applicants.find(
+        app => app.user.toString() === userId.toString()
+      );
+      return {
+        ...project,
+        myStatus: myApp ? myApp.status : 'pending'
+      };
     });
 
-    res.json(projects);
+    res.json(projectsWithStatus);
   } catch (error) {
-    res.status(500).json({ message: "Projects fetch nahi ho paye!", error: error.message });
+    res.status(500).json({ message: "Error fetching projects", error: error.message });
   }
 };
-// Apply for a project (Engineer side)
-export const applyForProject = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    
-    if (!project) return res.status(404).json({ message: "Project nahi mila!" });
 
-    // Check if already applied
-    const alreadyApplied = project.applicants.find(
-      (app) => app.user.toString() === req.user._id.toString()
-    );
+export const applyToProject = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const { proposalText, bidAmount } = req.body;
+        const userId = req.user._id;
 
-    if (alreadyApplied) {
-      return res.status(400).json({ message: "Bhai, pehle hi apply kar chuke ho!" });
+        if (req.user.role !== 'engineer') {
+            return res.status(403).json({ message: 'Only engineers can apply' });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found" });
+
+        if (project.applications.includes(userId)) {
+            return res.status(400).json({ message: "Already applied!" });
+        }
+
+        await Project.findByIdAndUpdate(projectId, {
+            $push: { 
+                applicants: { user: userId, proposalText, bidAmount, status: 'pending' },
+                applications: userId 
+            }
+        });
+
+        await User.findByIdAndUpdate(userId, {
+            $push: { appliedProjects: projectId }
+        });
+
+        res.status(200).json({ message: "Application saved successfully! 🚀" });
+    } catch (error) {
+        res.status(500).json({ message: "Server error", error: error.message });
     }
-
-    // ✅ Naye schema ke hisaab se data push karo
-    project.applicants.push({
-      user: req.user._id,
-      status: 'pending' // Default status
-    });
-
-    await project.save();
-    res.json({ message: "Successfully applied! 🎉" });
-
-  } catch (error) {
-    res.status(500).json({ message: "Apply nahi ho paya lala!", error: error.message });
-  }
 };

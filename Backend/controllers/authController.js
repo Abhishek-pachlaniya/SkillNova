@@ -18,7 +18,6 @@ export const registerUser = async (req, res) => {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Password Hashing
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -30,13 +29,16 @@ export const registerUser = async (req, res) => {
         });
 
         if (user) {
+            // 🔥 FIX: Register mein bhi response ko 'user' object ke andar daal diya
             res.status(201).json({
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                avatar: user.avatar,
                 token: generateToken(user._id),
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    avatar: user.avatar,
+                }
             });
         }
     } catch (error) {
@@ -53,13 +55,12 @@ export const loginUser = async (req, res) => {
         if (user && (await bcrypt.compare(password, user.password))) {
             res.json({
                 token: generateToken(user._id),
-                user: { // 👈 In sabko 'user' key ke andar daal do
+                user: { 
                     _id: user._id,
                     name: user.name,
                     email: user.email,
                     role: user.role,
                     avatar: user.avatar,
-                    
                 }
             });
         } else {
@@ -69,5 +70,3 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
 };
-
-
