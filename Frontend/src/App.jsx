@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider } from './context/AuthContext'; // 👈 Step 1: AuthContext import kiya
 import LandingHero from './components/LandingHero';
 import Login from './pages/Login';
+import About from './pages/About';
+import Settings from './pages/Settings';
 import Signup from './pages/Signup';
 import DashboardLayout from './layout/DashboardLayout';
 import DashboardHome from './pages/DashboardHome';
@@ -14,11 +16,13 @@ import MyProjects from './pages/MyProjects';
 import ApplicantsList from './pages/ApplicantsList';
 import EngineerProfileView from './pages/EngineerProfileView';
 import Engineers from './pages/Engineers'
-import Chat from './pages/chat';
+import Chat from './pages/Chat';
+import { ChatProvider } from './context/ChatContext';
 function App() {
   return (
     /* 🌐 Step 2: Poore App ko AuthProvider mein lapet diya */
     <AuthProvider> 
+      <ChatProvider>
       <Router>
         <Routes>
           {/* 🔓 Public Routes */}
@@ -37,6 +41,8 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<DashboardHome />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/engineers" element={<Engineers />} />
             <Route path="/engineer-profile/:id" element={<EngineerProfileView />} />
@@ -53,6 +59,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      </ChatProvider>
     </AuthProvider>
   );
 }

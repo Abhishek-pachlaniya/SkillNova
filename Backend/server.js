@@ -8,12 +8,13 @@ import userRoutes from './routes/userRoutes.js'
 import applicationRoutes from './routes/applicationRoutes.js'; 
 import interviewRoutes from './routes/interviewRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
-
+import notificationRoutes from './routes/notificationRoutes.js';
 // 🚨 1. NAYA: Socket.io aur HTTP ke imports
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-
-// Environment variables load karo
+import { socketHandler } from './utils/socketHandler.js';
+import conversationRoutes from './routes/conversationRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 dotenv.config();
 
 // DB Connect
@@ -31,7 +32,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
+app.set('socketio', io);
 // Middlewares
 app.use(cors());
 app.use(express.json()); // Body parser
@@ -45,24 +46,9 @@ app.get('/', (req, res) => {
 });
 app.use('/api/interviews', interviewRoutes);
 app.use('/api/ai', aiRoutes);
-
-// 🚨 4. NAYA: Asli Chat ka Logic (Socket Connection)
-io.on("connection", (socket) => {
-  console.log("🟢 Naya user chat mein aaya! ID:", socket.id);
-
-  // Frontend se 'sendMessage' aane par suno...
-  socket.on("sendMessage", (messageData) => {
-    // Dusre connect hue logo ko turant forward kar do
-    socket.broadcast.emit("receiveMessage", messageData);
-  });
-
-  // Jab user tab close kar de
-  socket.on("disconnect", () => {
-    console.log("🔴 User chala gaya:", socket.id);
-  });
-});
-
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/conversations', conversationRoutes);
+app.use('/api/messages', messageRoutes);
+socketHandler(io);
 const PORT = process.env.PORT || 5000;
-
-// 🚨 5. SABSE ZAROORI: app.listen ki jagah server.listen karo!
 server.listen(PORT, () => console.log(`🔥 Server & Socket started on port ${PORT}`));

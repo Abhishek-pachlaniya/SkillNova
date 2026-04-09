@@ -1,17 +1,33 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext'; // 🚨 NAYA IMPORT (Socket ab se aayega)
 import { 
   LogOut, LayoutDashboard, Users, FileText, Settings, 
-  Menu, Bell, Search, ChevronRight, X, Briefcase, Zap
+  Menu, Bell, Search, ChevronRight, X, Briefcase, Zap,
+  MessageSquare, Info 
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
+  
+  // 🚨 NAYA: Context se Notifications la rahe hain! Koi socket setup nahi yahan.
+  const { notifications, setNotifications } = useChat(); 
+
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 🚨 USE-EFFECT GAYAB! (Socket logic ab ChatContext.jsx mein hai)
+
+  // Notifications calculation
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+  };
 
   const userName = user?.name || 'Guest';
   const userRole = user?.role || 'User';
@@ -28,12 +44,13 @@ export default function DashboardLayout({ children }) {
     { name: 'Projects', icon: <FileText size={18} />, path: '/projects' },
     { name: 'My Projects', icon: <Briefcase size={18} />, path: '/my-projects' },
     { name: 'Engineers', icon: <Users size={18} />, path: '/engineers' },
+    { name: 'Messages', icon: <MessageSquare size={18} />, path: '/chat' },
+    { name: 'About Us', icon: <Info size={18} />, path: '/about' },
     { name: 'Settings', icon: <Settings size={18} />, path: '/settings' },
   ];
 
   const isActive = (path) => location.pathname === path;
 
-  // Helper to format path to breadcrumb name
   const getPageName = () => {
     const item = menuItems.find(i => i.path === location.pathname);
     return item ? item.name : 'Overview';
@@ -153,10 +170,62 @@ export default function DashboardLayout({ children }) {
                 />
             </div>
 
-            {/* Notification Bell */}
-            <div className="relative cursor-pointer p-1.5 text-slate-500 hover:bg-slate-100 rounded-md transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 bg-blue-600 w-2 h-2 rounded-full border-2 border-white"></span>
+            {/* Notification Dropdown Component */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1.5 bg-blue-600 w-2.5 h-2.5 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+
+              {isNotifOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsNotifOpen(false)}
+                  ></div>
+                  
+                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                      <h3 className="font-semibold text-slate-800">Notifications</h3>
+                      {unreadCount > 0 && (
+                        <button 
+                          onClick={markAllAsRead} 
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-sm text-slate-400">No new notifications</div>
+                      ) : (
+                        notifications.map(notif => (
+                          <div 
+                            key={notif.id} 
+                            className={`p-4 border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors ${notif.unread ? 'bg-blue-50/30' : ''}`}
+                          >
+                            <p className={`text-sm leading-snug ${notif.unread ? 'text-slate-800 font-medium' : 'text-slate-600'}`}>
+                              {notif.text}
+                            </p>
+                            <p className="text-[10px] font-medium text-slate-400 mt-1.5 uppercase tracking-wider">
+                              {notif.time}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="p-3 text-center border-t border-slate-100 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+                      <span className="text-sm font-medium text-blue-600">View all notifications</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>

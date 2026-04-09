@@ -1,6 +1,6 @@
 import Application from '../models/Application.js';
 import Project from '../models/Project.js';
-
+import { sendNotification } from '../utils/notificationHelper.js'; // 🚨 NAYA IMPORT
 export const applyToProject = async (req, res) => {
     try {
         const { projectId, proposal, bidAmount } = req.body;
@@ -27,6 +27,12 @@ export const applyToProject = async (req, res) => {
             proposal,
             bidAmount
         });
+        await sendNotification(
+        req, 
+        clientId, 
+        "A Engineer applied to your project", 
+        "project"
+    );
 
         res.status(201).json({ message: 'Applied successfully!', application });
     } catch (error) {
@@ -54,6 +60,16 @@ export const updateApplicationStatus = async (req, res) => {
             { status }, 
             { new: true }
         );
+    const alertMessage = status === 'accepted' 
+      ? "🎉 Badhai ho! Client ne aapko is project ke liye HIRE kar liya hai." 
+      : "😔 Sorry, client ne aapki profile reject kar di hai.";
+
+    await sendNotification(
+      req, 
+      engineerId, // Ab message Engineer ko jayega
+      alertMessage, 
+      "project"
+    );
         res.json(application);
     } catch (error) {
         res.status(500).json({ message: "Update failed" });

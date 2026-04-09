@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
-import { Search, Sparkles, MapPin, Briefcase, Code2, UserPlus, Loader2 } from 'lucide-react';
+import { Search, Sparkles, MapPin, Briefcase, UserPlus, Loader2, MessageSquare } from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
 
 export default function Engineers() {
   const [prompt, setPrompt] = useState('');
@@ -12,11 +13,36 @@ export default function Engineers() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // ==========================================
+  // 🚨 FIXED: handleMessageClick (State pass karne ka tareeka)
+  // ==========================================
+  // ==========================================
+  // 🚨 FIXED: handleMessageClick (Using your custom API instance)
+  // ==========================================
+  const handleMessageClick = async (engineerId) => {
+    try {
+      console.log("🟢 Button Clicked! Engineer ID:", engineerId);
+      
+      // 1. Apne custom API instance ka use karo (Hardcoded URL aur Token ka lafda khatam)
+      const res = await API.post('/conversations', {
+        receiverId: engineerId
+      });
+
+      console.log("🟢 Room Data Received:", res.data);
+      const conversationData = res.data;
+
+      // 2. Redirect to Chat page
+      navigate('/chat', { state: { newChat: conversationData } });
+
+    } catch (error) {
+      console.error("❌ Chat shuru karne mein gadbad:", error);
+      alert("Chat start nahi ho payi! Apne keyboard pe F12 daba aur Console check kar ki kya error aayi hai.");
+    }
+  };
+
   // Normal fetch (sab engineers dikhane ke liye bina search ke)
   const fetchAllEngineers = async () => {
     try {
-      // Assuming you have a route to get all users where role='engineer'
-      // Agar nahi banaya toh backend me bana lena, abhi blank array rakhte hain fallback ke liye
       const res = await API.get('/users/public/engineers').catch(() => ({ data: [] })); 
       setEngineers(res.data);
     } catch (error) {
@@ -36,7 +62,6 @@ export default function Engineers() {
     setLoading(true);
     setHasSearched(true);
     try {
-      // Backend ke AI search route par request bhejna
       const res = await API.post('/ai/search', { prompt });
       setEngineers(res.data);
     } catch (err) {
@@ -114,7 +139,6 @@ export default function Engineers() {
                   alt={eng.name}
                   className="w-16 h-16 rounded-2xl object-cover bg-slate-50 border border-slate-100"
                 />
-                {/* AI Match Score Badge (Agar vector search se aaya hai) */}
                 {eng.score && (
                   <span className="bg-green-100 text-green-700 font-black text-[10px] px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1">
                     <Sparkles size={12}/> {Math.round(eng.score * 100)}% Match
@@ -139,12 +163,22 @@ export default function Engineers() {
                 <span className="flex items-center gap-1"><Briefcase size={14}/> {eng.experience || '0'} Yrs</span>
               </div>
 
-              <button 
-                onClick={() => navigate(`/engineer-profile/${eng._id}`)}
-                className="w-full py-3 bg-slate-50 text-slate-600 font-black rounded-xl hover:bg-indigo-600 hover:text-white transition-colors group-hover:shadow-lg flex items-center justify-center gap-2"
-              >
-                View Profile <UserPlus size={16} />
-              </button>
+              {/* 🚨 NAYA: 2 Buttons ka mast Layout */}
+              <div className="flex gap-3 mt-auto">
+                <button 
+                  onClick={() => navigate(`/engineer-profile/${eng._id}`)}
+                  className="flex-1 py-2.5 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 border border-slate-200"
+                >
+                  <UserPlus size={16} /> Profile
+                </button>
+                <button 
+                  onClick={() => handleMessageClick(eng._id)}
+                  className="flex-1 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 group-hover:scale-105"
+                >
+                  <MessageSquare size={16} /> Message
+                </button>
+              </div>
+
             </div>
           ))
         ) : (

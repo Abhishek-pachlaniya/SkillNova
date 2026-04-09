@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs'; 
 
 // 1. Get User Profile (Logged-in user ke liye)
 export const getUserProfile = async (req, res) => {
@@ -96,5 +97,66 @@ export const getAllEngineers = async (req, res) => {
   } catch (err) {
     console.error("Fetch Engineers Error:", err);
     res.status(500).json({ message: "Server error: Engineers fetch nahi ho paye." });
+  }
+};
+
+// Opar bcrypt import zaroor karna!
+
+
+export const updateUserSettings = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Basic Info
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+
+    // Role specific
+    if (user.role === 'engineer') {
+        user.skills = req.body.skills || user.skills;
+        user.experience = req.body.experience || user.experience;
+        user.portfolio = req.body.portfolio || user.portfolio;
+    } else if (user.role === 'client') {
+        user.companyDetails = req.body.companyDetails || user.companyDetails;
+    }
+
+    // 🔒 PROPER PASSWORD UPDATE LOGIC
+    if (req.body.newPassword && req.body.currentPassword) {
+      // 1. Check if current password is correct
+      const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Current password galat hai bhai!" });
+      }
+      
+      // 2. Hash new password and save
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(req.body.newPassword, salt);
+    } else if (req.body.newPassword && !req.body.currentPassword) {
+        return res.status(400).json({ message: "Puraana password bhi dena padega!" });
+    }
+
+    // Notifications
+    if (req.body.notifications !== undefined) {
+        user.notifications = req.body.notifications;
+    }
+
+    const updatedUser = await user.save();
+    
+    // Response se password hata do
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+
+    res.json({
+      user: userResponse,
+      message: "Settings ekdum jhakaas update ho gayi! 🔥"
+    });
+
+  } catch (error) {
+    console.error("Settings Update Error:", error);
+    res.status(500).json({ message: 'Server error during settings update' });
   }
 };

@@ -1,3 +1,44 @@
+/* =========================================
+   GLOBAL THEME VARIABLES (Dark/Light Mode)
+   ========================================= */
+
+/* 🌞 LIGHT MODE (Default) */
+:root {
+  --bg-color: #f8fafc; /* Light background */
+  --text-color: #334155;
+  --text-h: #0f172a;
+  --border: #e2e8f0;
+  --accent: #4f46e5;
+  --accent-bg: #e0e7ff;
+  --accent-border: #c7d2fe;
+  --social-bg: #f1f5f9;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* 🌙 DARK MODE (Jab toggle button on hoga) */
+body.dark-theme {
+  --bg-color: #020617; /* Sexy dark background */
+  --text-color: #cbd5e1;
+  --text-h: #f8fafc;
+  --border: #1e293b;
+  --accent: #818cf8;
+  --accent-bg: rgba(79, 70, 229, 0.1);
+  --accent-border: rgba(79, 70, 229, 0.5);
+  --social-bg: rgba(255, 255, 255, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+/* =========================================
+   BODY STYLES (Ye jadoo karega)
+   ========================================= */
+body {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  transition: background-color 0.4s ease, color 0.4s ease; /* Smooth animation */
+  margin: 0;
+  padding: 0;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;
