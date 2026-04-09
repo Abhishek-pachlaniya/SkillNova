@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
 import { Mail, Lock, LogIn, ShieldCheck, Zap, Globe } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast'; // 1. Toast Import kiya
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '', role: 'engineer' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,16 +18,20 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    
     try {
       const res = await API.post('/auth/login', formData);
       const { user, token } = res.data;
+      
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      
+      toast.success(`Welcome back, ${user.name}!`); // 2. Success Toast
       navigate('/dashboard');
     } catch (err) {
-      // Updated error message to be more professional
-      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+      // 3. Error Toast (Backend ka message ya default message)
+      const errorMsg = err.response?.data?.message || 'Invalid email or password.';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -35,12 +39,13 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-8 font-sans">
+      {/* 4. Toaster component yahan add kiya (Top Right corner) */}
+      <Toaster position="top-center" reverseOrder={false} />
       
       <div className="w-full max-w-[1000px] grid lg:grid-cols-2 bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100">
         
         {/* === 🚀 LEFT SIDE: Enterprise Branding === */}
         <div className="hidden lg:flex flex-col justify-between p-12 bg-slate-900 relative overflow-hidden">
-          {/* Subtle Background Pattern */}
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
           
           <div className="relative z-10">
@@ -90,13 +95,7 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm font-medium flex items-center">
-                {error}
-              </div>
-            )}
-
-            {/* Role Switcher (Standard SaaS Pills) */}
+            {/* Role Switcher */}
             <div className="flex p-1 bg-slate-100 rounded-lg gap-1">
               {['engineer', 'client'].map((r) => (
                 <button
@@ -150,7 +149,9 @@ const Login = () => {
                 <input type="checkbox" className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4" />
                 <span className="text-sm text-slate-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">Forgot password?</a>
+              <Link to="/forgot-password" className="text-indigo-600 font-medium hover:underline">
+                Forgot password?
+              </Link>
             </div>
 
             <button 

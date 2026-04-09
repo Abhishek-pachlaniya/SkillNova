@@ -18,6 +18,9 @@ import EngineerProfileView from './pages/EngineerProfileView';
 import Engineers from './pages/Engineers'
 import Chat from './pages/Chat';
 import { ChatProvider } from './context/ChatContext';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 function App() {
   return (
     /* 🌐 Step 2: Poore App ko AuthProvider mein lapet diya */
@@ -29,7 +32,9 @@ function App() {
           <Route path="/" element={<LandingHero />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-        
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           {/* 🔒 Protected Routes (Shared Layout) */}
           <Route 
             element={

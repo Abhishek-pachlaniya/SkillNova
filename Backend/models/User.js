@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'; // 👈 Ye line add karo!
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -24,13 +24,30 @@ const userSchema = new mongoose.Schema({
     
     hourlyRate: { type: Number, default: 0 }, 
     completedProjects: { type: Number, default: 0 },
-    // models/User.js mein baki fields ke sath ye add kar
+    
+    // 👇 Yahan bracket theek se band ho gaya hai
     profileEmbedding: { 
-    type: [Number], // Ye array of numbers hoga (Vector)
-    default: [] 
-},
+        type: [Number], 
+        default: [] 
+    }, 
+
+    // 👇 AUTH FIELDS ALAG SE HAIN (Root level par)
+    isVerified: { 
+        type: Boolean, 
+        default: false 
+    },
+    verificationToken: { 
+        type: String 
+    },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpire: {
+        type: Date
+    }
+
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema);
 
-export default User; // 👈 Ye export ab kaam karega
+export default User;

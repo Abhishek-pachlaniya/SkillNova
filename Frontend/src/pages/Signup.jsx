@@ -12,16 +12,13 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // 2. Base URL apne aap API instance se lag jayega
       const res = await API.post('/auth/signup', formData);
       
-      // 3. CRITICAL: Token aur User data dono save karo
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user)); 
-      
-      navigate('/dashboard');
+      alert(res.data.message || "Signup Successful! Bhai apna email check kar verify karne ke liye.");
+      navigate('/login');
+
     } catch (err) {
-      alert(err.response?.data?.message || "Signup failed! Email check karo bhai.");
+      alert(err.response?.data?.message || "Signup failed! Try again.");
     } finally {
       setLoading(false);
     }

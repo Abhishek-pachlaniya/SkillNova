@@ -24,6 +24,10 @@ export const AuthProvider = ({ children }) => {
   }, [loadUser]);
 
   const login = (userData, token) => {
+    if (!userData || !token) {
+      console.error("Login failed: Missing user data or token");
+      return;
+    }
     const finalUser = userData.user ? userData.user : userData;
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(finalUser));
