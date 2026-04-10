@@ -1,23 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, Trash2, CheckCircle, X, Send, DollarSign, MessageSquare } from 'lucide-react';
+import { 
+  Calendar, Trash2, CheckCircle, X, Send, DollarSign, 
+  MessageSquare, Sparkles, ArrowLeft, ShieldCheck, Clock, 
+  Cpu, Target, Zap, Globe, Layout
+} from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // States
+  // === LOGIC & STATES: PRESERVED ===
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [proposalText, setProposalText] = useState("");
   const [bidAmount, setBidAmount] = useState("");
 
-  // Get User from LocalStorage
   const user = JSON.parse(localStorage.getItem('user'));
 
-  // 1. Fetch Project Details
   const fetchProject = async () => {
     try {
       setLoading(true);
@@ -37,34 +40,29 @@ const ProjectDetail = () => {
     fetchProject();
   }, [id]);
 
-  // Logic Checks
-  const isOwner = user && project && project.clientId === user._id;
+  // Logic Checks (Variable names preserved)
+  const isOwner = user && project && (project.clientId === user._id || project.clientId?._id === user._id);
   const isEngineer = user && user.role === 'engineer';
-  const isClient = user && user.role === 'client';
   const hasApplied = project?.applications?.includes(user?._id);
 
-  // 2. Handle Application Submit
   const handleSendProposal = async () => {
     if (!proposalText || !bidAmount) return alert("Bhai, saari details bharo!");
-
     try {
       const token = localStorage.getItem('token');
       await axios.post(`http://localhost:5000/api/projects/${id}/apply`, 
         { proposalText, bidAmount: Number(bidAmount) }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       alert("Proposal bhej diya gaya hai! 🚀");
       setShowModal(false);
       setProposalText("");
       setBidAmount("");
-      fetchProject(); // Refresh data to show "Applied" status
+      fetchProject(); 
     } catch (err) {
       alert(err.response?.data?.message || "Kuch lafda ho gaya!");
     }
   };
 
-  // 3. Handle Delete (Only for Owner)
   const handleDelete = async () => {
     if (window.confirm("Bhai, pakka delete karna hai? Ye wapas nahi aayega!")) {
       try {
@@ -81,79 +79,76 @@ const ProjectDetail = () => {
   };
 
   if (loading) return (
-    <div className="p-20 text-center space-y-4">
-      <div className="animate-spin inline-block w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full"></div>
-      <p className="font-black text-slate-400 tracking-widest text-xs uppercase">Loading Details...</p>
+    <div className="h-[50vh] flex flex-col items-center justify-center gap-3">
+      <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Fetching Brief...</p>
     </div>
   );
 
-  if (!project) return <div className="p-20 text-center font-bold">Project not found!</div>;
+  if (!project) return <div className="p-20 text-center text-white font-bold">Data Error.</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      
-      {/* --- ACTION BAR --- */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm gap-4">
-        <div className="flex items-center gap-4">
-          <div className="bg-emerald-50 p-4 rounded-2xl text-emerald-600">
-            <CheckCircle size={28}/>
+    <motion.div 
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+      className="max-w-6xl mx-auto space-y-6 pb-20" 
+    >
+      {/* 🔙 Back Button */}
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest group">
+        <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Back to Network
+      </button>
+
+      {/* 🚀 COMPACT HEADER */}
+      <div className="bg-slate-950/40 backdrop-blur-md p-6 rounded-3xl border border-white/5 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
+        <div className="flex items-center gap-5">
+          <div className="bg-indigo-600/10 p-3 rounded-2xl text-indigo-400 border border-indigo-500/20">
+            <Layout size={24} />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-[1000] text-slate-900 leading-tight">{project.title}</h1>
-            <p className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-[0.2em]">Status: {project.status}</p>
+            <h1 className="text-2xl md:text-3xl font-[1000] text-white tracking-tight leading-none mb-2">{project.title}</h1>
+            <div className="flex items-center gap-3">
+               <span className="text-[9px] font-black bg-white/5 text-slate-400 px-2 py-0.5 rounded border border-white/5 uppercase tracking-widest">#{id.slice(-6)}</span>
+               <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+                 <div className="w-1 h-1 bg-emerald-500 rounded-full animate-ping" /> {project.status}
+               </span>
+            </div>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          {/* Client Actions: Edit & Delete */}
+
+        <div className="flex items-center gap-3">
           {isOwner && (
             <>
-              <button 
-                onClick={() => navigate(`/projects/edit/${project._id}`)}
-                className="flex-1 md:flex-none bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all"
-              >
-                Edit
-              </button>
-              <button 
-                onClick={handleDelete}
-                className="p-3.5 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl transition-all border border-red-100"
-              >
-                <Trash2 size={20}/>
-              </button>
+              <button onClick={() => navigate(`/projects/edit/${project._id}`)} className="bg-white text-black px-5 py-2.5 rounded-xl font-black text-xs hover:bg-slate-200 transition-all uppercase tracking-widest">Edit</button>
+              <button onClick={handleDelete} className="p-2.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all border border-rose-500/10"><Trash2 size={18}/></button>
             </>
           )}
-
-          {/* Engineer Actions: Apply / Applied */}
           {isEngineer && (
             hasApplied ? (
-              <div className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 px-8 py-3.5 rounded-2xl font-black text-sm border border-emerald-100 cursor-default">
-                <CheckCircle size={18} /> Applied
+              <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-6 py-2.5 rounded-xl font-black text-xs border border-emerald-500/20 uppercase tracking-widest">
+                <CheckCircle size={16} /> Applied
               </div>
             ) : (
-              <button 
-                onClick={() => setShowModal(true)} 
-                className="flex-1 md:flex-none bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95"
-              >
-                Apply for this Project
+              <button onClick={() => setShowModal(true)} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-xs hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 uppercase tracking-[0.1em] flex items-center gap-2 group">
+                Apply Now <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
               </button>
             )
           )}
         </div>
       </div>
 
-      {/* --- MAIN CONTENT --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Side: Description */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white p-8 md:p-12 rounded-[3rem] border border-slate-100 shadow-sm min-h-[400px]">
-            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Detailed Description</h3>
-            <p className="text-slate-600 leading-relaxed text-lg font-medium whitespace-pre-wrap">{project.description}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 📝 DESCRIPTION (Sleek) */}
+        <div className="lg:col-span-2">
+          <div className="bg-slate-950/40 backdrop-blur-md p-8 md:p-10 rounded-[2rem] border border-white/5 shadow-sm min-h-[300px]">
+            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+               Objectives
+            </h3>
+            <p className="text-slate-300 leading-relaxed text-base md:text-lg font-medium whitespace-pre-wrap">{project.description}</p>
             
-            <div className="mt-16 pt-10 border-t border-slate-50">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Required Skills</p>
+            <div className="mt-12 pt-8 border-t border-white/5">
+              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">Required Stack</p>
               <div className="flex flex-wrap gap-2">
                 {project.tags?.map(tag => (
-                  <span key={tag} className="px-4 py-2 bg-slate-50 text-slate-500 border border-slate-100 rounded-xl font-bold text-[10px] uppercase tracking-widest">
+                  <span key={tag} className="px-3 py-1.5 bg-white/5 text-slate-400 border border-white/10 rounded-lg font-black text-[9px] uppercase tracking-widest hover:text-white transition-all cursor-default">
                     #{tag}
                   </span>
                 ))}
@@ -162,90 +157,75 @@ const ProjectDetail = () => {
           </div>
         </div>
 
-        {/* Right Side: Sidebar Stats */}
+        {/* 📊 STATS SIDEBAR (Sleek) */}
         <div className="space-y-6">
-          <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            <p className="text-indigo-200 text-[10px] font-black uppercase mb-2 tracking-widest">Project Budget</p>
-            <h2 className="text-5xl font-black tracking-tighter">${project.budget}</h2>
+          <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-8 rounded-[2rem] text-white shadow-xl relative overflow-hidden group">
+            <div className="absolute -right-5 -top-5 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+            <p className="text-indigo-200 text-[10px] font-black uppercase mb-1 tracking-widest opacity-70">Budget Allocation</p>
+            <h2 className="text-4xl font-[1000] tracking-tighter flex items-center gap-1">
+              <span className="text-xl font-black text-indigo-300">$</span>{project.budget}
+            </h2>
             
-            <div className="mt-12 pt-8 border-t border-indigo-500/50 flex items-center gap-4">
-               <div className="bg-indigo-500/30 p-3 rounded-2xl"><Calendar size={20}/></div>
+            <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-4">
+               <div className="bg-black/20 p-2.5 rounded-xl border border-white/5"><Clock size={16} className="text-indigo-300"/></div>
                <div>
-                 <p className="text-[9px] font-bold text-indigo-200 uppercase tracking-widest">Deadline</p>
-                 <span className="font-black text-sm">{new Date(project.deadline).toLocaleDateString('en-GB')}</span>
+                 <p className="text-[9px] font-black text-indigo-200 uppercase tracking-widest">Deadline</p>
+                 <span className="font-bold text-sm">{new Date(project.deadline).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
                </div>
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Client Info</p>
+          <div className="bg-slate-950/40 p-6 rounded-[2rem] border border-white/5">
+             <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4">Client Hub</p>
              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center font-black text-slate-400">
+                <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center font-black text-lg text-indigo-400">
                   {project.clientId?.name ? project.clientId.name.charAt(0).toUpperCase() : "C"}
                 </div>
                 <div>
-                   <p className="font-bold text-slate-800 italic text-sm">Verified Client</p>
-                   <p className="text-xs text-slate-400">5+ Projects Posted</p>
+                   <p className="font-black text-white text-sm tracking-tight leading-none">{project.clientId?.name || "Member"}</p>
+                   <p className="text-[9px] text-emerald-500 font-black mt-1.5 uppercase tracking-widest flex items-center gap-1">
+                     <ShieldCheck size={10} /> Neural Vetted
+                   </p>
                 </div>
              </div>
           </div>
         </div>
       </div>
 
-      {/* --- APPLICATION MODAL --- */}
-      {showModal && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-[100] p-4">
-          <div className="bg-white p-8 md:p-10 rounded-[3rem] w-full max-w-xl shadow-2xl relative animate-in zoom-in duration-300">
-            <button 
-               onClick={() => setShowModal(false)} 
-               className="absolute right-8 top-8 text-slate-400 hover:text-slate-900 bg-slate-50 p-2 rounded-full transition-all"
-            >
-              <X size={20} />
-            </button>
+      {/* 🚨 APPLICATION MODAL (Compact & Responsive) */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 md:p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="bg-[#0f172a] p-8 md:p-10 rounded-[2.5rem] w-full max-w-lg shadow-2xl relative border border-white/10 z-10">
+              <button onClick={() => setShowModal(false)} className="absolute right-6 top-6 text-slate-500 hover:text-white bg-white/5 p-2 rounded-full transition-all border border-white/5"><X size={18} /></button>
 
-            <div className="mb-8">
-              <h2 className="text-3xl font-[1000] text-slate-900 leading-tight">Apply for this Project</h2>
-              <p className="text-slate-500 mt-2 font-medium">Your proposal is the first thing the client sees.</p>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <MessageSquare size={14}/> Why you?
-                </label>
-                <textarea 
-                  className="w-full p-5 bg-slate-50 border-2 border-transparent rounded-[1.5rem] h-44 outline-none focus:border-indigo-100 focus:bg-white transition-all text-slate-700 font-medium resize-none"
-                  placeholder="Tell the client about your experience with similar projects..."
-                  value={proposalText}
-                  onChange={(e) => setProposalText(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-2">
-                  <DollarSign size={14}/> Your Bid ($)
-                </label>
-                <input 
-                  type="number"
-                  className="w-full p-5 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-100 focus:bg-white transition-all font-bold text-lg"
-                  placeholder="e.g. 500"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                />
+              <div className="mb-8 text-center">
+                <div className="inline-flex items-center gap-2 border border-indigo-500/20 px-3 py-1 rounded-full bg-indigo-500/5 text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-3"><Zap size={10} /> Secure Link</div>
+                <h2 className="text-3xl font-black text-white tracking-tight">Submit Proposal</h2>
               </div>
 
-              <button 
-                onClick={handleSendProposal}
-                className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl shadow-indigo-100 hover:bg-indigo-700 mt-4"
-              >
-                Submit Proposal <Send size={20} />
-              </button>
-            </div>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Pitch Overview</label>
+                  <textarea className="w-full p-5 bg-black/40 border border-white/5 rounded-2xl h-40 outline-none focus:border-indigo-500/50 transition-all text-white font-medium resize-none text-sm" placeholder="Why are you a match?..." value={proposalText} onChange={(e) => setProposalText(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Bid Amount ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
+                    <input type="number" className="w-full p-4 pl-12 bg-black/40 border border-white/5 rounded-xl outline-none focus:border-indigo-500/50 transition-all font-black text-xl text-white tracking-tighter" placeholder="00" value={bidAmount} onChange={(e) => setBidAmount(e.target.value)} />
+                  </div>
+                </div>
+                <button onClick={handleSendProposal} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 uppercase tracking-widest">
+                  Deploy Proposal <Send size={16} />
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

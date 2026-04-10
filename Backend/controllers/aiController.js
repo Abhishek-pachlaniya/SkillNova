@@ -47,8 +47,8 @@ export const searchEngineers = async (req, res) => {
                     "index": "vector_index", 
                     "path": "profileEmbedding",
                     "queryVector": vector,
-                    "numCandidates": 100,
-                    "limit": 10
+                    "numCandidates": 1000,
+                    "limit": 50
                 }
             },
             { "$match": { "role": "engineer" } },

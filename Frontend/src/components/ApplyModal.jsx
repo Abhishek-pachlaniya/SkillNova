@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { X, Send, DollarSign, MessageSquare } from 'lucide-react';
+import { X, Send, DollarSign, MessageSquare, Zap } from 'lucide-react';
 import API from '../api/axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ApplyModal({ project, isOpen, onClose, onApplySuccess }) {
-  const [proposalText, setProposalText] = useState(''); // Model name sync
+  // === LOGIC & STATES: PRESERVED ===
+  const [proposalText, setProposalText] = useState('');
   const [bidAmount, setBidAmount] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -15,102 +17,103 @@ export default function ApplyModal({ project, isOpen, onClose, onApplySuccess })
 
     setLoading(true);
     try {
-      // 🟢 API Endpoint: Ensure ye tere backend route se match kare
-      // Payload mein 'proposalText' aur 'bidAmount' bhej rahe hain
       await API.post(`/projects/${project._id}/apply`, {
         proposalText,
         bidAmount: Number(bidAmount)
       });
-
-      alert("Application Sent! Database update ho gaya 🚀");
-      
-      // 🔵 Parent (Projects.jsx) ko notify karo taki UI turant 'Applied' ho jaye
+      alert("Application Sent! 🚀");
       if (onApplySuccess) onApplySuccess(project._id);
-      
-      // Cleanup
       setProposalText('');
       setBidAmount('');
       onClose();
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Apply karne mein lafda ho gaya!");
+      alert(err.response?.data?.message || "Lafda ho gaya!");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative animate-in zoom-in duration-300">
-        
+    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+      {/* 🌫️ Responsive Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+        onClick={onClose}
+      />
+      
+      {/* 🚀 Compact Modal Container */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="bg-[#0f172a] w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl relative border border-white/10 z-10 overflow-hidden"
+      >
         {/* Close Button */}
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors bg-slate-50 p-2 rounded-full"
+          className="absolute top-4 right-4 text-slate-500 hover:text-white bg-white/5 p-1.5 rounded-full transition-all border border-white/5"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
 
-        {/* Header */}
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-[1000] text-slate-900 leading-tight">
-            Apply for <span className="text-indigo-600">{project.title}</span>
+        {/* Header Section (Tightened) */}
+        <div className="mb-6 text-center">
+          <div className="inline-flex items-center gap-2 border border-indigo-500/20 px-2.5 py-1 rounded-full bg-indigo-500/5 text-[8px] font-black text-indigo-400 uppercase tracking-widest mb-3">
+             <Zap size={10} /> Secure Submission
+          </div>
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight">
+            Apply for <span className="text-indigo-500">{project.title.slice(0, 20)}...</span>
           </h2>
-          <p className="text-slate-500 mt-2 font-medium">
-            Explain why you're the perfect engineer for this.
-          </p>
         </div>
 
-        <form onSubmit={handleApply} className="space-y-6">
+        <form onSubmit={handleApply} className="space-y-5">
           {/* Proposal Input */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-              <MessageSquare size={14} /> Your Proposal
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">
+              <MessageSquare size={12} className="text-indigo-400" /> Pitch
             </label>
             <textarea 
               required
               value={proposalText}
-              placeholder="I can build this using MERN stack and integrate the AI features you need..."
-              className="w-full p-5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] focus:border-indigo-100 focus:bg-white transition-all outline-none h-44 font-medium text-slate-700 resize-none"
+              placeholder="Why are you the best fit?..."
+              className="w-full p-4 bg-black/40 border border-white/5 rounded-xl focus:border-indigo-500/50 transition-all outline-none h-32 font-medium text-slate-300 text-xs resize-none"
               onChange={(e) => setProposalText(e.target.value)}
             />
           </div>
 
           {/* Bid Input */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-              <DollarSign size={14} /> Your Bid ($)
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">
+              <DollarSign size={12} className="text-indigo-400" /> Bid Amount
             </label>
-            <input 
-              type="number"
-              required
-              value={bidAmount}
-              placeholder="e.g. 500"
-              className="w-full p-5 bg-slate-50 border-2 border-slate-50 rounded-2xl focus:border-indigo-100 focus:bg-white transition-all outline-none font-bold text-slate-900"
-              onChange={(e) => setBidAmount(e.target.value)}
-            />
+            <div className="relative group">
+              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={16} />
+              <input 
+                type="number"
+                required
+                value={bidAmount}
+                placeholder="0.00"
+                className="w-full p-3.5 pl-10 bg-black/40 border border-white/5 rounded-xl focus:border-indigo-500/50 transition-all outline-none font-black text-lg text-white tracking-tighter"
+                onChange={(e) => setBidAmount(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button (Compact) */}
           <button 
             type="submit"
             disabled={loading}
-            className={`w-full py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 ${
+            className={`w-full py-3.5 rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 uppercase tracking-widest text-[10px] ${
               loading 
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
-                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-100"
+                ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-white/5" 
+                : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/20"
             }`}
           >
-            {loading ? (
-              "Processing..."
-            ) : (
-              <>
-                Send Application <Send size={18} />
-              </>
-            )}
+            {loading ? "Processing..." : <>Deploy Proposal <Send size={14} /></>}
           </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }

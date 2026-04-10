@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import API from '../api/axios';
-
-// 🚨 FIX 1: Humne explicit icons import kiye hain, wildcard (*) hata diya hai
 import { ArrowLeft, Sparkles, Briefcase, MapPin, Mail, Globe, User, Code } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-// 🚨 FIX 2: Helper component ko top par rakh diya taaki undefined na aaye
+// Helper component for verification status
 const StatusItem = ({ label, status }) => (
   <div className="flex items-center justify-between">
     <span className="text-slate-500 font-bold text-sm">{label}</span>
@@ -30,7 +29,8 @@ export default function EngineerProfileView() {
         const res = await API.get(`/users/public/${id}`);
         setEngineer(res.data);
       } catch (err) {
-        console.error("Profile load nahi hui!");
+        toast.error("Profile load nahi ho payi! Backend check karo.");
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -38,7 +38,6 @@ export default function EngineerProfileView() {
     
     fetchEngineer();
   }, [id]);
-  
 
   const handleRequestInterview = async () => {
     try {
@@ -46,11 +45,10 @@ export default function EngineerProfileView() {
       const res = await API.post('/interviews/request-interview', { 
         engineerId: id 
       });
-      alert(res.data.msg || "Request bhej di gayi hai!");
+      toast.success(res.data.msg || "Interview request bhej di gayi hai! 🔥");
     } catch (err) {
-      console.error(err);
-      const errorMsg = err.response?.data?.msg || "Kuch gadbad ho gayi!";
-      alert(errorMsg);
+      const errorMsg = err.response?.data?.msg || "Request bhejne mein gadbad hui!";
+      toast.error(errorMsg);
     } finally {
       setRequestSending(false);
     }
@@ -72,7 +70,7 @@ export default function EngineerProfileView() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* --- Top Navigation --- */}
+      {/* Top Navigation */}
       <div className="max-w-5xl mx-auto p-6">
         <button 
           onClick={() => navigate(-1)}
@@ -85,7 +83,7 @@ export default function EngineerProfileView() {
       <div className="max-w-5xl mx-auto px-6">
         <div className="bg-white rounded-[3.5rem] shadow-2xl shadow-slate-200/60 overflow-hidden border border-white">
           
-          {/* --- Banner Section --- */}
+          {/* Banner Section */}
           <div className="h-60 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 relative">
             <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
             <div className="absolute -bottom-1 px-12 w-full flex justify-between items-end">
@@ -100,7 +98,7 @@ export default function EngineerProfileView() {
             </div>
           </div>
 
-          {/* --- Profile Content --- */}
+          {/* Profile Content */}
           <div className="px-12 pt-12 pb-16">
             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
               <div>
@@ -119,6 +117,7 @@ export default function EngineerProfileView() {
                   </span>
                 </div>
               </div>
+              
               {/* Social Links */}
               <div className="flex gap-3">
                 {engineer.githubUrl && (
@@ -183,11 +182,11 @@ export default function EngineerProfileView() {
                     className={`w-full mt-10 text-white py-5 rounded-2xl font-black text-lg shadow-xl transition-all active:scale-95 ${
                         requestSending 
                         ? 'bg-slate-400 cursor-not-allowed' 
-                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
+                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100 shadow-xl'
                     }`}
                     >
                     {requestSending ? 'Sending Request...' : 'Request for Interview'}
-                    </button>
+                  </button>
                 </div>
               </div>
             </div>

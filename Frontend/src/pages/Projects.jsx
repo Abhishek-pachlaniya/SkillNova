@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
-import { Plus, Briefcase, Clock, Check, Search } from 'lucide-react';
+import { Plus, Briefcase, Clock, Check, Search, Sparkles, DollarSign, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import ApplyModal from '../components/ApplyModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Projects() {
   const [projects, setProjects] = useState([]);
@@ -12,7 +13,7 @@ export default function Projects() {
   
   const navigate = useNavigate();
 
-  // 🟢 User data nikalne ka safe tareeka
+  // 🟢 User data nikalne ka safe tareeka (Logic Preserved)
   const getSafeUser = () => {
     try {
       const storedUser = localStorage.getItem('user');
@@ -27,7 +28,7 @@ export default function Projects() {
   const user = getSafeUser();
   const isClient = user.role === 'client';
 
-  // 🔵 Projects fetch karne ka function
+  // 🔵 Projects fetch karne ka function (Logic Preserved)
   const fetchProjects = async () => {
     try {
       setLoading(true);
@@ -45,129 +46,160 @@ export default function Projects() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-10 pb-20"
+    >
+      {/* 🚀 Header Section: Wide & Grand */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-[1000] text-slate-900 tracking-tight">Available Projects</h1>
-          <p className="text-slate-500 font-medium">Explore or post new opportunities in the AI ecosystem.</p>
+          <h1 className="text-4xl md:text-5xl font-[1000] text-white tracking-tighter leading-none">
+            Available <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400">Opportunities</span>
+          </h1>
+          <p className="text-slate-500 font-bold mt-4 flex items-center gap-2 tracking-wide uppercase text-xs">
+            <Sparkles size={14} className="text-indigo-500" />
+            Explore or post new projects in the neural ecosystem.
+          </p>
         </div>
         
         {isClient && (
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/projects/add')}
-            className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95"
+            className="flex items-center justify-center gap-3 bg-indigo-600 text-white px-8 py-4 rounded-[1.5rem] font-black shadow-2xl shadow-indigo-500/20 hover:bg-indigo-700 transition-all group"
           >
-            <Plus size={20} /> Post New Project
-          </button>
+            <Plus size={20} className="group-hover:rotate-90 transition-transform" /> Post New Project
+          </motion.button>
         )}
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* 📋 Projects Grid: Bento Design */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {loading ? (
-          // Simple Skeleton Loader
-          <div className="col-span-full py-20 text-center font-bold text-slate-400">Loading projects...</div>
+          // 🦴 Futuristic Skeleton Loader
+          [1, 2, 3, 4].map(i => (
+            <div key={i} className="h-[280px] bg-white/5 rounded-[2.5rem] border border-white/5 animate-pulse" />
+          ))
         ) : projects.length > 0 ? (
           projects.map((project) => {
-            // 🟠 YE HAI MAIN LOGIC: 
-            // Refresh ke baad bhi backend se project.applications mein user._id aayega
             const hasApplied = project.applications?.includes(user._id);
 
             return (
-              <div key={project._id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-100 transition-all group">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="bg-indigo-50 p-3 rounded-2xl text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                    <Briefcase size={24} />
+              <motion.div 
+                key={project._id} 
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-slate-950/50 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/5 shadow-2xl hover:border-indigo-500/30 transition-all group relative overflow-hidden"
+              >
+                {/* Background Glow */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 rounded-full blur-3xl group-hover:bg-indigo-600/10 transition-colors" />
+
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className="bg-gradient-to-br from-indigo-600/20 to-violet-600/20 p-4 rounded-2xl text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                    <Briefcase size={28} />
                   </div>
-                  <span className="text-xs font-black px-3 py-1 bg-slate-100 text-slate-500 rounded-full uppercase tracking-widest">
-                    ${project.budget}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xl font-[1000] text-white tracking-tighter flex items-center gap-1">
+                      <DollarSign size={18} className="text-emerald-500" /> {project.budget}
+                    </span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">
+                       Fixed Price
+                    </span>
+                  </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-2xl font-[1000] text-white mb-3 tracking-tight group-hover:text-indigo-400 transition-colors leading-none">
                   {project.title}
                 </h3>
-                <p className="text-slate-500 text-sm line-clamp-2 mb-4 font-medium">
+                <p className="text-slate-400 text-base line-clamp-2 mb-6 font-medium leading-relaxed">
                   {project.description}
                 </p>
 
-                <div className="flex flex-wrap gap-2 mb-6">
+                {/* Tags Section */}
+                <div className="flex flex-wrap gap-2 mb-8">
                   {project.tags?.map(tag => (
-                    <span key={tag} className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-1 rounded-md border border-slate-100">
-                      #{tag.toUpperCase()}
+                    <span key={tag} className="text-[10px] font-black bg-white/5 text-slate-400 px-3 py-1 rounded-full border border-white/5 uppercase tracking-widest hover:text-white transition-colors">
+                      #{tag}
                     </span>
                   ))}
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                  <div className="flex items-center gap-2 text-slate-400 text-xs font-bold">
-                    <Clock size={14} /> Active
+                {/* Footer Actions */}
+                <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                  <div className="flex items-center gap-2 text-indigo-400 text-xs font-black uppercase tracking-widest">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    Neural Active
                   </div>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-6">
                     <Link 
                       to={`/projects/${project._id}`} 
-                      className="text-slate-400 font-bold text-sm hover:text-indigo-600 transition-all"
+                      className="text-slate-500 font-black text-xs uppercase tracking-widest hover:text-white transition-all flex items-center gap-1 group/link"
                     >
-                      View Details
+                      Details <ArrowUpRight size={14} className="group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 transition-transform" />
                     </Link>
 
-                    {/* 🟠 Apply Button Logic */}
+                    {/* 🟠 Apply Button Logic (Logic Preserved) */}
                     {!isClient && (
                       hasApplied ? (
-                        <button 
-                          disabled
-                          className="bg-green-50 text-green-600 px-5 py-2.5 rounded-xl font-black text-sm flex items-center gap-2 cursor-default border border-green-100"
-                        >
-                          <Check size={16} strokeWidth={3} /> Applied
-                        </button>
+                        <div className="bg-emerald-500/10 text-emerald-400 px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest flex items-center gap-2 border border-emerald-500/20">
+                          <CheckCircle2 size={16} /> Applied
+                        </div>
                       ) : (
-                        <button 
+                        <motion.button 
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                           onClick={() => {
                             setSelectedProject(project);
                             setModalOpen(true);
                           }}
-                          className="bg-indigo-50 text-indigo-600 px-5 py-2.5 rounded-xl font-black text-sm hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95"
+                          className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
                         >
                           Apply Now
-                        </button>
+                        </motion.button>
                       )
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })
         ) : (
-          <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-            <div className="text-4xl mb-4">🔍</div>
-            <h3 className="text-xl font-bold text-slate-900">No projects found</h3>
+          <div className="col-span-full py-32 text-center bg-slate-950/50 rounded-[3rem] border border-white/5 backdrop-blur-md">
+            <div className="bg-slate-900 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/5">
+              <Search className="text-slate-700" size={40} />
+            </div>
+            <h3 className="text-2xl font-black text-white tracking-tight">No projects found in the network</h3>
+            <p className="text-slate-500 mt-2 font-medium">Try broadening your search or check back later.</p>
           </div>
         )}
       </div>
 
-      {/* 🔴 Apply Modal */}
-      {selectedProject && (
-        <ApplyModal 
-          project={selectedProject} 
-          isOpen={isModalOpen} 
-          onClose={() => {
-            setModalOpen(false);
-            setSelectedProject(null);
-          }}
-          // Success hone par local state update karo taki Bina Refresh ke status change ho
-          onApplySuccess={(projectId) => {
-             setProjects(prevProjects => 
-               prevProjects.map(p => 
-                 p._id === projectId 
-                 ? { ...p, applications: [...(p.applications || []), user._id] } 
-                 : p
-               )
-             );
-          }}
-        />
-      )}
-    </div>
+      {/* 🔴 Apply Modal (Logic Preserved) */}
+      <AnimatePresence>
+        {selectedProject && (
+          <ApplyModal 
+            project={selectedProject} 
+            isOpen={isModalOpen} 
+            onClose={() => {
+              setModalOpen(false);
+              setSelectedProject(null);
+            }}
+            onApplySuccess={(projectId) => {
+               setProjects(prevProjects => 
+                 prevProjects.map(p => 
+                   p._id === projectId 
+                   ? { ...p, applications: [...(p.applications || []), user._id] } 
+                   : p
+                 )
+               );
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

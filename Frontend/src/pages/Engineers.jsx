@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import API from '../api/axios';
-import { Search, Sparkles, MapPin, Briefcase, UserPlus, Loader2, MessageSquare } from 'lucide-react'; 
+import { 
+  Search, Sparkles, MapPin, Briefcase, 
+  UserPlus, Loader2, MessageSquare, Cpu, 
+  ArrowUpRight, Globe 
+} from 'lucide-react'; 
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Engineers() {
   const [prompt, setPrompt] = useState('');
@@ -11,39 +16,21 @@ export default function Engineers() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
-  // ==========================================
-  // 🚨 FIXED: handleMessageClick (State pass karne ka tareeka)
-  // ==========================================
-  // ==========================================
-  // 🚨 FIXED: handleMessageClick (Using your custom API instance)
-  // ==========================================
+  // === LOGIC PRESERVED: Chat Start ===
   const handleMessageClick = async (engineerId) => {
     try {
-      console.log("🟢 Button Clicked! Engineer ID:", engineerId);
-      
-      // 1. Apne custom API instance ka use karo (Hardcoded URL aur Token ka lafda khatam)
-      const res = await API.post('/conversations', {
-        receiverId: engineerId
-      });
-
-      console.log("🟢 Room Data Received:", res.data);
-      const conversationData = res.data;
-
-      // 2. Redirect to Chat page
-      navigate('/chat', { state: { newChat: conversationData } });
-
+      const res = await API.post('/conversations', { receiverId: engineerId });
+      navigate('/chat', { state: { newChat: res.data } });
     } catch (error) {
-      console.error("❌ Chat shuru karne mein gadbad:", error);
-      alert("Chat start nahi ho payi! Apne keyboard pe F12 daba aur Console check kar ki kya error aayi hai.");
+      toast.error("Chat start nahi ho payi!");
     }
   };
 
-  // Normal fetch (sab engineers dikhane ke liye bina search ke)
+  // === LOGIC PRESERVED: Fetch Initial Data ===
   const fetchAllEngineers = async () => {
     try {
-      const res = await API.get('/users/public/engineers').catch(() => ({ data: [] })); 
+      const res = await API.get('/users/public/engineers');
       setEngineers(res.data);
     } catch (error) {
       console.log(error);
@@ -54,139 +41,159 @@ export default function Engineers() {
     fetchAllEngineers();
   }, []);
 
-  // 🔥 MAIN MAGIC: AI Search Function
+  // === LOGIC PRESERVED: AI Search Execution ===
   const handleAISearch = async (e) => {
     e.preventDefault();
     if (!prompt.trim()) return;
-
     setLoading(true);
     setHasSearched(true);
     try {
       const res = await API.post('/ai/search', { prompt });
       setEngineers(res.data);
     } catch (err) {
-      console.error(err);
-      alert("AI Search fail ho gaya lala! Check backend.");
+      toast.error("AI Search fail ho gaya!");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      className="space-y-10 pb-20"
+    >
+      <Toaster position="top-center" />
       
-      {/* 🧠 AI Search Header */}
-      <div className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden border border-indigo-800">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[100px] opacity-20"></div>
+      {/* 🧠 AI Search Header: Sleek Dark Glassmorphism */}
+      <div className="bg-slate-950/40 backdrop-blur-xl rounded-[3rem] p-10 md:p-14 text-white shadow-2xl relative overflow-hidden border border-white/5">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none opacity-50"></div>
         
-        <div className="relative z-10 max-w-2xl">
-          <div className="flex items-center gap-2 text-indigo-300 font-black uppercase tracking-widest text-xs mb-4">
-            <Sparkles size={16} /> RAG Vector Engine Active
+        <div className="relative z-10 max-w-3xl">
+          <div className="flex items-center gap-3 text-indigo-400 font-black uppercase tracking-[0.3em] text-[10px] mb-6">
+            <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+            Neural RAG Engine Active
           </div>
-          <h1 className="text-3xl md:text-5xl font-[1000] tracking-tight mb-4">
-            Find the perfect engineer with <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">AI</span>
+          
+          <h1 className="text-4xl md:text-6xl font-[1000] tracking-tighter mb-8 leading-[0.9]">
+            Hire the best <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-cyan-400">Engineers</span> with AI
           </h1>
-          <p className="text-slate-400 font-medium mb-8">
-            Stop searching by basic tags. Just type what you need in natural language, and our AI will find the best matches using semantic vector search.
-          </p>
 
-          <form onSubmit={handleAISearch} className="relative group flex flex-col sm:flex-row gap-3">
+          <form onSubmit={handleAISearch} className="relative group flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
               <input 
                 type="text" 
-                placeholder="e.g. 'I need a MERN stack dev with 2 years experience in React'" 
-                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-slate-400 pl-14 pr-6 py-4 rounded-2xl outline-none focus:bg-white/20 focus:border-indigo-400 transition-all font-medium"
+                placeholder="e.g. 'I need a MERN dev for a fintech project...'" 
+                className="w-full bg-black/40 border-2 border-white/5 text-white pl-16 pr-8 py-5 rounded-[1.5rem] outline-none focus:border-indigo-500/30 focus:bg-black/60 transition-all font-medium"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
               />
             </div>
             <button 
               type="submit" 
-              disabled={loading}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black transition-all active:scale-95 flex items-center justify-center min-w-[140px] shadow-lg shadow-indigo-500/30"
+              disabled={loading} 
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-5 rounded-[1.5rem] font-black transition-all shadow-xl shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-3 uppercase text-[11px] tracking-widest whitespace-nowrap"
             >
-              {loading ? <Loader2 className="animate-spin" size={24} /> : 'Search AI 🚀'}
+              {loading ? <Loader2 className="animate-spin" size={20} /> : <><Sparkles size={18}/> Search AI</>}
             </button>
           </form>
         </div>
       </div>
 
-      {/* 📋 Results Section */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black text-slate-800">
-          {hasSearched ? `AI Top Matches (${engineers.length})` : 'Explore Engineers'}
-        </h3>
-        {hasSearched && (
-          <button onClick={() => { setPrompt(''); fetchAllEngineers(); setHasSearched(false); }} className="text-sm font-bold text-indigo-600 hover:underline">
-            Clear Search
-          </button>
-        )}
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+          <Cpu className="text-indigo-500" size={18} />
+          <h3 className="text-lg font-black text-white tracking-widest uppercase">
+            {hasSearched ? `AI Intelligence Results (${engineers.length})` : 'Expert Directory'}
+          </h3>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-           <div className="col-span-full py-20 text-center text-slate-400 font-bold flex flex-col items-center gap-3">
-             <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-             AI is reading profiles...
-           </div>
-        ) : engineers.length > 0 ? (
-          engineers.map((eng) => (
-            <div key={eng._id} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
-              <div className="flex justify-between items-start mb-4">
-                <img 
-                  src={eng.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${eng.name}`} 
-                  alt={eng.name}
-                  className="w-16 h-16 rounded-2xl object-cover bg-slate-50 border border-slate-100"
-                />
+      {/* 👷 Engineer Grid: Ultra-Thin Sleek Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+        <AnimatePresence>
+          {loading ? (
+             <div className="col-span-full py-32 text-center flex flex-col items-center gap-4">
+               <div className="w-10 h-10 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin"></div>
+               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Interrogating user vectors...</p>
+             </div>
+          ) : engineers.length > 0 ? (
+            engineers.map((eng, idx) => (
+              <motion.div 
+                key={eng._id} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group bg-slate-950/40 backdrop-blur-md p-7 rounded-[2.5rem] border border-white/5 shadow-2xl hover:border-indigo-500/30 transition-all duration-500 flex flex-col h-full relative overflow-hidden"
+              >
+                {/* Score Badge */}
                 {eng.score && (
-                  <span className="bg-green-100 text-green-700 font-black text-[10px] px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1">
-                    <Sparkles size={12}/> {Math.round(eng.score * 100)}% Match
-                  </span>
+                  <div className="absolute top-6 right-6">
+                    <span className="bg-emerald-500/10 text-emerald-400 font-black text-[9px] px-3 py-1.5 rounded-full border border-emerald-500/20 uppercase tracking-widest flex items-center gap-1 shadow-lg">
+                      <Sparkles size={10} className="animate-pulse" /> {Math.round(eng.score * 100)}% Match
+                    </span>
+                  </div>
                 )}
+                
+                <div className="flex-1">
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="relative">
+                      <img 
+                        src={eng.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${eng.name}`} 
+                        className="w-16 h-16 rounded-2xl object-cover bg-slate-900 border border-white/10 group-hover:scale-105 transition-transform"
+                        alt={eng.name}
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-slate-950 rounded-full" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black text-white tracking-tight leading-none mb-1">{eng.name}</h4>
+                      <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest line-clamp-1">{eng.bio || "Full Stack Systems Engineer"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {(eng.skills || []).slice(0, 3).map((skill, idx) => (
+                      <span key={idx} className="bg-white/5 text-slate-400 border border-white/5 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest group-hover:text-white transition-colors">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">
+                    <span className="flex items-center gap-1.5"><MapPin size={12} className="text-indigo-500"/> {eng.location || 'Remote'}</span>
+                    <span className="flex items-center gap-1.5"><Globe size={12} className="text-indigo-500"/> {eng.experience || '0'} YRS XP</span>
+                  </div>
+                </div>
+
+                {/* Actions: Replaced UserPlus with ArrowUpRight for 'Profile' feel */}
+                <div className="flex gap-3 mt-auto pt-6 border-t border-white/5">
+                  <button 
+                    onClick={() => navigate(`/engineer-profile/${eng._id}`)}
+                    className="flex-1 py-3 bg-white/5 text-slate-400 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-white hover:text-black transition-all border border-white/5 flex items-center justify-center gap-2"
+                  >
+                    Profile <ArrowUpRight size={14} />
+                  </button>
+                  <button 
+                    onClick={() => handleMessageClick(eng._id)}
+                    className="flex-1 py-3 bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare size={14} /> Message
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="col-span-full py-24 text-center bg-slate-950/50 rounded-[3.5rem] border-2 border-dashed border-white/5 backdrop-blur-md">
+              <div className="w-20 h-20 bg-slate-900 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-700">
+                <Search size={32} />
               </div>
-
-              <h4 className="text-xl font-black text-slate-900">{eng.name}</h4>
-              <p className="text-sm font-bold text-indigo-600 mb-3 line-clamp-1">{eng.bio || "Full Stack Developer"}</p>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {eng.skills?.slice(0, 3).map((skill, idx) => (
-                  <span key={idx} className="bg-slate-50 text-slate-500 border border-slate-100 px-2 py-1 rounded-lg text-[10px] font-black uppercase truncate max-w-[150px] inline-block">
-                    {skill}
-                  </span>
-                ))}
-                {eng.skills?.length > 3 && <span className="text-[10px] font-bold text-slate-400">+{eng.skills.length - 3}</span>}
-              </div>
-
-              <div className="flex items-center gap-4 text-xs font-bold text-slate-400 mb-6">
-                <span className="flex items-center gap-1"><MapPin size={14}/> {eng.location || 'Remote'}</span>
-                <span className="flex items-center gap-1"><Briefcase size={14}/> {eng.experience || '0'} Yrs</span>
-              </div>
-
-              {/* 🚨 NAYA: 2 Buttons ka mast Layout */}
-              <div className="flex gap-3 mt-auto">
-                <button 
-                  onClick={() => navigate(`/engineer-profile/${eng._id}`)}
-                  className="flex-1 py-2.5 bg-slate-50 text-slate-600 font-bold text-sm rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center gap-2 border border-slate-200"
-                >
-                  <UserPlus size={16} /> Profile
-                </button>
-                <button 
-                  onClick={() => handleMessageClick(eng._id)}
-                  className="flex-1 py-2.5 bg-indigo-600 text-white font-bold text-sm rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-200 flex items-center justify-center gap-2 group-hover:scale-105"
-                >
-                  <MessageSquare size={16} /> Message
-                </button>
-              </div>
-
+              <h3 className="text-lg font-black text-white uppercase tracking-[0.2em]">Inventory Exhausted</h3>
+              <p className="text-slate-500 text-xs mt-2 font-medium">No engineers found matching your current neural briefing.</p>
             </div>
-          ))
-        ) : (
-          <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-            <h3 className="text-lg font-bold text-slate-400">No engineers found matching your prompt. 😅</h3>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -6,8 +6,9 @@ import toast, { Toaster } from 'react-hot-toast';
 import { 
   LogOut, LayoutDashboard, Users, FileText, Settings, 
   Menu, Bell, Search, ChevronRight, X, Briefcase, Zap,
-  MessageSquare, Info, Loader2 
+  MessageSquare, Info, Loader2, Sparkles 
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardLayout({ children }) {
   const { user, logout, loading, checkSession } = useAuth();
@@ -21,6 +22,7 @@ export default function DashboardLayout({ children }) {
 
   const prevNotifCount = useRef(notifications?.length || 0);
 
+  // === LOGIC PRESERVED: Session Check ===
   useEffect(() => {
     const hasLocalUser = localStorage.getItem('user') || localStorage.getItem('token');
     if ((!user || !user.name) && !loading && hasLocalUser) {
@@ -28,21 +30,21 @@ export default function DashboardLayout({ children }) {
     }
   }, [user, loading, checkSession]);
 
+  // === LOGIC PRESERVED: Notifications Toast ===
   useEffect(() => {
     if (notifications && notifications.length > prevNotifCount.current) {
       const newNotif = notifications.find(n => n.unread) || notifications[0];
-      
       if (newNotif) {
         toast(newNotif.text || 'You have a new message!', {
           icon: '🔔',
           duration: 4000,
           style: {
             borderRadius: '1rem',
-            background: '#1e293b', 
+            background: '#0f172a', 
             color: '#fff',
             fontWeight: '600',
             fontSize: '14px',
-            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)'
+            border: '1px solid rgba(255,255,255,0.1)'
           },
         });
       }
@@ -52,9 +54,9 @@ export default function DashboardLayout({ children }) {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
-        <p className="text-slate-500 font-medium italic">Getting things ready...</p>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-[#020617]">
+        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+        <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Initializing Neural Link...</p>
       </div>
     );
   }
@@ -64,9 +66,7 @@ export default function DashboardLayout({ children }) {
   const userInitial = userName.charAt(0).toUpperCase();
   const userAvatar = user?.avatar;
 
-  const handleLogout = () => {
-    logout();
-  };
+  const handleLogout = () => logout();
 
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={18} />, path: '/dashboard' },
@@ -81,115 +81,148 @@ export default function DashboardLayout({ children }) {
   const isActive = (path) => location.pathname === path;
   const getPageName = () => menuItems.find(i => i.path === location.pathname)?.name || 'Overview';
 
-  // 🔥 NAYA FUNCTION: Notifications clear karne ke liye
   const handleClearNotifications = () => {
-    setNotifications([]); // Sab notifications hata do
-    setIsNotifOpen(false); // Dropdown bhi band kar do
-    toast.success("All caught up!", { id: 'notif-clear' }); // Optional mast toast
+    setNotifications([]);
+    setIsNotifOpen(false);
+    toast.success("All caught up!", { id: 'notif-clear' });
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-[#020617] font-sans text-slate-300 overflow-hidden">
       
-      {/* 🔥 POSITION TOP-CENTER KAR DIYA TAAKI BEECH MEIN AAYE */}
       <Toaster position="top-center" reverseOrder={false} />
 
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] md:hidden" onClick={() => setMobileMenuOpen(false)} />
-      )}
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] md:hidden" 
+            onClick={() => setMobileMenuOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
 
-      <aside className={`fixed inset-y-0 left-0 z-[70] bg-white border-r border-slate-200 transition-all duration-300 flex flex-col ${isMobileMenuOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full md:translate-x-0'} ${isSidebarOpen ? 'md:w-64' : 'md:w-20'}`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-slate-100 shrink-0">
+      {/* === SIDEBAR: World-Class Dark Style === */}
+      <aside className={`fixed inset-y-0 left-0 z-[70] bg-slate-950 border-r border-white/5 transition-all duration-300 flex flex-col ${isMobileMenuOpen ? 'translate-x-0 w-72 shadow-[20px_0_50px_rgba(0,0,0,0.5)]' : '-translate-x-full md:translate-x-0'} ${isSidebarOpen ? 'md:w-64' : 'md:w-20'}`}>
+        
+        {/* Logo Section */}
+        <div className="flex items-center justify-between h-20 px-6 border-b border-white/5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-1.5 rounded-md"><Zap className="text-white" size={18} /></div>
-            {(isSidebarOpen || isMobileMenuOpen) && <span className="font-semibold text-base tracking-tight">AI-HIRE</span>}
+            <div className="bg-gradient-to-tr from-indigo-600 to-violet-500 p-2 rounded-xl shadow-lg shadow-indigo-500/20">
+              <Sparkles className="text-white" size={18} />
+            </div>
+            {(isSidebarOpen || isMobileMenuOpen) && (
+              <span className="font-black text-lg tracking-tighter text-white uppercase">AI-HIRE<span className="text-indigo-500">.</span></span>
+            )}
           </div>
-          <button onClick={() => setMobileMenuOpen(false)} className="md:hidden"><X size={20} /></button>
+          <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-white"><X size={20} /></button>
         </div>
 
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+        {/* Navigation Section */}
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
-            <div key={item.name} onClick={() => { navigate(item.path); setMobileMenuOpen(false); }} className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors ${isActive(item.path) ? 'bg-slate-100 text-slate-900 font-medium' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}>
-              <div className="shrink-0">{item.icon}</div>
-              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm">{item.name}</span>}
+            <div 
+              key={item.name} 
+              onClick={() => { navigate(item.path); setMobileMenuOpen(false); }} 
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 group ${isActive(item.path) ? 'bg-indigo-600/10 text-white border border-indigo-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-slate-200'}`}
+            >
+              <div className={`shrink-0 transition-transform duration-200 ${isActive(item.path) ? 'text-indigo-400 scale-110' : 'group-hover:scale-110'}`}>
+                {item.icon}
+              </div>
+              {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-bold tracking-tight">{item.name}</span>}
             </div>
           ))}
         </nav>
 
-        <div className="p-4 border-t border-slate-100">
-          <button onClick={handleLogout} className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-md transition-colors ${(isSidebarOpen || isMobileMenuOpen) ? 'text-slate-500 hover:bg-red-50 hover:text-red-600' : 'justify-center text-slate-400 hover:text-red-600'}`}>
+        {/* Logout Section */}
+        <div className="p-4 border-t border-white/5 bg-black/20">
+          <button onClick={handleLogout} className={`flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 ${(isSidebarOpen || isMobileMenuOpen) ? 'text-slate-500 hover:bg-rose-500/10 hover:text-rose-400' : 'justify-center text-slate-500 hover:text-rose-400'}`}>
             <LogOut size={18} />
-            {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-medium">Log out</span>}
+            {(isSidebarOpen || isMobileMenuOpen) && <span className="text-sm font-black uppercase tracking-widest">Exit</span>}
           </button>
         </div>
       </aside>
 
+      {/* === MAIN CONTENT AREA === */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-6 sticky top-0 z-50">
-          <div className="flex items-center gap-4">
-            <button onClick={() => window.innerWidth < 768 ? setMobileMenuOpen(true) : setSidebarOpen(!isSidebarOpen)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md">
+        
+        {/* === HEADER: Glassmorphism Style === */}
+        <header className="h-20 backdrop-blur-xl bg-slate-950/50 border-b border-white/5 flex items-center justify-between px-6 md:px-10 sticky top-0 z-50">
+          <div className="flex items-center gap-5">
+            <button onClick={() => window.innerWidth < 768 ? setMobileMenuOpen(true) : setSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-400 hover:bg-white/5 rounded-xl transition-colors border border-white/5">
               <Menu size={20} />
             </button>
-            <div className="hidden sm:flex items-center gap-2 text-sm text-slate-500">
-              <span>Dashboard</span>
-              <ChevronRight size={14} />
-              <span className="text-slate-900 font-medium">{getPageName()}</span>
+            <div className="hidden sm:flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <span className="hover:text-indigo-400 transition-colors cursor-pointer">Platform</span>
+              <ChevronRight size={14} className="text-slate-700" />
+              <span className="text-white">{getPageName()}</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-4 md:gap-5">
+          <div className="flex items-center gap-6">
             <div className="relative">
-              <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-md relative">
-                <Bell size={20} />
-                {notifications.filter(n => n.unread).length > 0 && <span className="absolute top-1 right-1.5 bg-blue-600 w-2.5 h-2.5 rounded-full border-2 border-white animate-pulse"></span>}
+              <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="p-2.5 text-slate-400 hover:bg-white/5 rounded-xl border border-white/5 relative group transition-all hover:border-indigo-500/30">
+                <Bell size={20} className="group-hover:rotate-12 transition-transform" />
+                {notifications.filter(n => n.unread).length > 0 && (
+                  <span className="absolute top-2 right-2.5 bg-indigo-500 w-2 h-2 rounded-full border border-slate-950 animate-pulse"></span>
+                )}
               </button>
 
-              {isNotifOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
-                    <div className="p-4 border-b flex justify-between bg-slate-50/50">
-                      <h3 className="font-semibold">Notifications</h3>
-                      
-                      {/* 🔥 YE BUTTON AB SAB KUCH CLEAR KAR DEGA */}
-                      {notifications.length > 0 && (
-                        <button 
-                          onClick={handleClearNotifications} 
-                          className="text-xs text-blue-600 font-medium hover:text-blue-800 transition-colors"
-                        >
-                          Clear all
-                        </button>
-                      )}
-                    </div>
-                    <div className="max-h-[320px] overflow-y-auto">
-                      {notifications.length === 0 ? <div className="p-6 text-center text-slate-400">No new notifications</div> : 
-                        notifications.map(notif => (
-                          <div key={notif.id} className={`p-4 border-b hover:bg-slate-50 transition-colors cursor-pointer ${notif.unread ? 'bg-blue-50/30' : ''}`}>
-                            <p className="text-sm text-slate-800">{notif.text}</p>
-                            <p className="text-[10px] text-slate-400 mt-1 font-medium">{notif.time}</p>
+              <AnimatePresence>
+                {isNotifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-4 w-80 bg-slate-900 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 z-50 overflow-hidden"
+                    >
+                      <div className="p-4 border-b border-white/5 flex justify-between bg-black/20">
+                        <h3 className="font-black text-xs uppercase tracking-widest text-white">Neural Feed</h3>
+                        {notifications.length > 0 && (
+                          <button onClick={handleClearNotifications} className="text-[10px] text-indigo-400 font-black uppercase hover:text-indigo-300 transition-colors">Clear all</button>
+                        )}
+                      </div>
+                      <div className="max-h-[320px] overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-10 text-center flex flex-col items-center gap-3">
+                            <Zap size={24} className="text-slate-700" />
+                            <p className="text-xs text-slate-500 font-bold">No active signals</p>
                           </div>
-                        ))
-                      }
-                    </div>
-                  </div>
-                </>
-              )}
+                        ) : (
+                          notifications.map(notif => (
+                            <div key={notif.id} className={`p-5 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer ${notif.unread ? 'bg-indigo-500/5' : ''}`}>
+                              <p className="text-sm text-slate-300 font-medium leading-relaxed">{notif.text}</p>
+                              <p className="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-tighter italic">{notif.time}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
-            <div onClick={() => navigate('/profile')} className="flex items-center gap-3 cursor-pointer group">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-medium text-slate-900">{userName}</p>
-                <p className="text-xs text-slate-500 capitalize">{userRole}</p>
+            <div onClick={() => navigate('/profile')} className="flex items-center gap-4 cursor-pointer group bg-white/5 pl-4 pr-1.5 py-1.5 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all">
+              <div className="text-right hidden lg:block">
+                <p className="text-sm font-[1000] text-white tracking-tight">{userName}</p>
+                <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest">{userRole}</p>
               </div>
-              <div className="w-9 h-9 bg-slate-100 border rounded-full flex items-center justify-center text-slate-600 overflow-hidden group-hover:ring-2 group-hover:ring-blue-100 transition-all">
-                {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" alt="" /> : userInitial}
+              <div className="w-10 h-10 bg-slate-800 border border-white/10 rounded-xl flex items-center justify-center text-white overflow-hidden group-hover:scale-95 transition-transform ring-2 ring-transparent group-hover:ring-indigo-500/20">
+                {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" alt="" /> : <span className="font-black">{userInitial}</span>}
               </div>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
-          <div className="max-w-7xl mx-auto">
+        {/* === MAIN SCROLLABLE AREA: Expanded Width Fix === */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
+          {/* Subtle background glow for main content */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
+          
+          {/* 🚨 WIDTH FIX: Changed max-w-7xl to max-w-[1440px] and added wider padding */}
+          <div className="max-w-[1440px] mx-auto relative z-10">
             {children}
           </div>
         </main>

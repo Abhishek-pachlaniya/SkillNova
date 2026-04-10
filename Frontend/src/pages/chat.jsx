@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Send, Search, ArrowLeft, MoreVertical, Phone, Video, CheckCheck, Smile, Paperclip, MessageSquare, Loader2 } from 'lucide-react';
+import { 
+  Send, Search, ArrowLeft, MoreVertical, Phone, Video, 
+  CheckCheck, Smile, Paperclip, MessageSquare, Loader2,
+  Cpu, ShieldCheck, Globe, User
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext'; 
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -18,8 +23,8 @@ export default function Chat() {
 
   const messagesEndRef = useRef(null);
 
+  // === LOGIC PRESERVED: Fetch Conversations ===
   const fetchConversations = useCallback(async () => {
-    // FIX: Safely check for token
     const token = user?.token || localStorage.getItem('token');
     if (!token || !user) return; 
 
@@ -44,6 +49,7 @@ export default function Chat() {
     }
   }, [location.state]);
 
+  // === LOGIC PRESERVED: Socket Listeners ===
   useEffect(() => {
     if (!socket || !user) return;
 
@@ -90,6 +96,7 @@ export default function Chat() {
     }
   }, [activeContact, socket, user]);
 
+  // === LOGIC PRESERVED: Send Handler ===
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() || !activeContact || !user || !socket) return;
@@ -100,7 +107,6 @@ export default function Chat() {
     });
     
     if (!receiver) return;
-
     const receiverId = receiver?._id ? String(receiver._id) : String(receiver);
 
     const messageData = {
@@ -139,7 +145,6 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // FIX: Added guard for user object in filter
   const filteredConversations = conversations.filter(conv => {
     const otherUser = conv.participants.find(p => {
       const pId = p?._id ? String(p._id) : String(p);
@@ -148,44 +153,50 @@ export default function Chat() {
     return otherUser?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // CRITICAL FIX: Agar user nahi hai, toh white screen ki jagah loading dikhao
   if (!user) {
     return (
-      <div className="h-[calc(100vh-8rem)] w-full flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
-        <p className="text-slate-500 font-medium italic">Loading your chats...</p>
+      <div className="h-[calc(100vh-8rem)] w-full flex flex-col items-center justify-center bg-slate-950 rounded-[3rem] border border-white/5">
+        <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
+        <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px]">Synchronizing Neural Links...</p>
       </div>
     );
   }
 
   return (
-    <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] flex overflow-hidden bg-[#f8fafc] rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-200/60 animate-in fade-in duration-500">
+    <div className="h-[calc(100vh-6rem)] md:h-[calc(100vh-8rem)] flex overflow-hidden bg-slate-950 rounded-[2.5rem] border border-white/5 shadow-2xl relative animate-in fade-in duration-700">
       
-      <div className={`w-full md:w-[340px] flex-shrink-0 flex flex-col bg-white/80 backdrop-blur-xl border-r border-slate-200/60 transition-all ${activeContact ? 'hidden md:flex' : 'flex'}`}>
-        <div className="p-5 border-b border-slate-100/80">
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4">Messages</h2>
+      {/* 🚀 SIDEBAR: Conversations List */}
+      <div className={`w-full md:w-[380px] flex-shrink-0 flex flex-col bg-slate-900/30 backdrop-blur-xl border-r border-white/5 transition-all ${activeContact ? 'hidden md:flex' : 'flex'}`}>
+        <div className="p-7 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-[1000] text-white tracking-tighter uppercase italic">Secure <span className="text-indigo-500">Node</span></h2>
+            <div className="bg-indigo-500/10 p-2 rounded-xl text-indigo-400 border border-indigo-500/10">
+              <Cpu size={18} />
+            </div>
+          </div>
+          
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-              <Search size={18} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search size={16} className="text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
             </div>
             <input 
               type="text" 
-              placeholder="Search conversations..." 
-              className="w-full bg-slate-100/50 text-slate-700 placeholder:text-slate-400 pl-10 pr-4 py-2.5 rounded-2xl outline-none focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 border border-transparent transition-all text-[15px]"
+              placeholder="Search data nodes..." 
+              className="w-full bg-black/40 border border-white/5 text-white pl-12 pr-4 py-3.5 rounded-2xl outline-none focus:border-indigo-500/30 transition-all text-xs font-bold uppercase tracking-widest placeholder:text-slate-600 shadow-inner"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-6">
           {filteredConversations.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
-              <MessageSquare size={40} className="mb-3 opacity-20" />
-              <p className="font-medium text-sm">No conversations found</p>
+            <div className="h-full flex flex-col items-center justify-center text-slate-700 p-8 text-center opacity-40">
+              <MessageSquare size={40} className="mb-4" />
+              <p className="text-[10px] font-black uppercase tracking-widest">No active links found</p>
             </div>
           ) : (
-            <div className="p-2 space-y-1">
+            <div className="space-y-2">
               {filteredConversations.map((conv) => {
                 const otherUser = conv.participants.find(p => {
                   const pId = p?._id ? String(p._id) : String(p);
@@ -197,32 +208,40 @@ export default function Chat() {
                 const isActive = activeContact?._id === conv._id;
 
                 return (
-                  <div 
+                  <motion.div 
                     key={conv._id} 
                     onClick={() => setActiveContact(conv)}
-                    className={`relative p-3 flex items-center gap-4 cursor-pointer transition-all duration-200 rounded-2xl mx-1
-                      ${isActive ? 'bg-indigo-50/80 shadow-sm ring-1 ring-indigo-100/50' : 'hover:bg-slate-50'}`}
+                    whileTap={{ scale: 0.98 }}
+                    className={`relative p-4 flex items-center gap-4 cursor-pointer transition-all duration-300 rounded-[1.5rem] border
+                      ${isActive 
+                        ? 'bg-indigo-600/10 border-indigo-500/20 shadow-lg shadow-indigo-600/5' 
+                        : 'bg-transparent border-transparent hover:bg-white/[0.03]'}`}
                   >
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center text-indigo-700 font-bold uppercase overflow-hidden shadow-inner border border-white">
-                        {otherUser.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" /> : otherUser.name?.charAt(0)}
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center border border-white/5 overflow-hidden group-hover:scale-110 transition-transform shadow-xl">
+                        {otherUser.avatar ? (
+                          <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" />
+                        ) : (
+                          <span className="text-indigo-400 font-black text-lg">{otherUser.name?.charAt(0)}</span>
+                        )}
                       </div>
                       {isOnline && (
-                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm"></span>
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-4 border-slate-950 rounded-full shadow-lg shadow-emerald-500/20"></span>
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-0.5">
-                        <h4 className={`font-semibold truncate text-[15px] ${isActive ? 'text-indigo-900' : 'text-slate-800'}`}>
-                          {otherUser.name}
-                        </h4>
+                      <h4 className={`font-black truncate text-sm tracking-tight ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                        {otherUser.name}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border
+                           ${isActive ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/10' : 'bg-white/5 text-slate-500 border-white/5'}`}>
+                           {otherUser.role || 'Agent'}
+                         </span>
                       </div>
-                      <p className={`text-[13px] truncate ${isActive ? 'text-indigo-600/80 font-medium' : 'text-slate-500'}`}>
-                        {otherUser.role || 'User'}
-                      </p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -230,6 +249,7 @@ export default function Chat() {
         </div>
       </div>
 
+      {/* 🗨️ CHAT INTERFACE */}
       {activeContact ? (() => {
         const otherUser = activeContact.participants.find(p => {
           const pId = p?._id ? String(p._id) : String(p);
@@ -238,43 +258,54 @@ export default function Chat() {
         const isOnline = onlineUsers?.includes(otherUser?._id);
 
         return (
-        <div className="flex-1 flex flex-col bg-[#f0f2f5] relative overflow-hidden">
+        <div className="flex-1 flex flex-col bg-[#020617] relative overflow-hidden">
           
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
+          {/* Subtle Grid Pattern Overlay */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0z' fill='%23ffffff'/%3E%3C/svg%3E")` }}></div>
 
-          <div className="h-[72px] bg-white/90 backdrop-blur-md border-b border-slate-200/60 px-5 flex items-center justify-between shrink-0 z-10">
+          {/* Chat Header */}
+          <div className="h-[80px] bg-slate-950/80 backdrop-blur-xl border-b border-white/5 px-6 flex items-center justify-between shrink-0 z-10">
             <div className="flex items-center gap-4">
-              <button onClick={() => setActiveContact(null)} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => setActiveContact(null)} className="md:hidden p-2 text-slate-400 hover:bg-white/5 rounded-xl transition-all">
                 <ArrowLeft size={20} />
               </button>
               
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center text-slate-600 font-bold uppercase overflow-hidden border border-slate-200 shadow-sm">
-                  {otherUser?.avatar ? <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" /> : otherUser?.name?.charAt(0)}
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 bg-slate-900 rounded-xl flex items-center justify-center border border-white/10 shadow-2xl">
+                  {otherUser?.avatar ? (
+                    <img src={otherUser.avatar} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <User size={20} className="text-slate-600" />
+                  )}
                 </div>
                 <div className="flex flex-col">
-                  <h3 className="font-bold text-slate-800 text-[15px] leading-tight">{otherUser?.name}</h3>
-                  <span className={`text-[12px] font-medium transition-colors ${isOnline ? 'text-emerald-500' : 'text-slate-400'}`}>
-                    {isOnline ? 'Online' : 'Offline'}
-                  </span>
+                  <h3 className="font-black text-white text-[15px] tracking-tight leading-none mb-1.5">{otherUser?.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
+                    <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      {isOnline ? 'Active Sync' : 'Offline Mode'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <button className="p-2 hover:bg-slate-100 hover:text-indigo-600 rounded-full transition-colors"><Phone size={18} /></button>
-              <button className="p-2 hover:bg-slate-100 hover:text-indigo-600 rounded-full transition-colors"><Video size={18} /></button>
-              <div className="w-px h-5 bg-slate-200 mx-1"></div>
-              <button className="p-2 hover:bg-slate-100 hover:text-slate-600 rounded-full transition-colors"><MoreVertical size={18} /></button>
+            <div className="flex items-center gap-2 text-slate-400">
+              <button className="p-3 hover:bg-white/5 hover:text-indigo-400 rounded-xl transition-all border border-transparent hover:border-white/5"><Phone size={18} /></button>
+              <button className="p-3 hover:bg-white/5 hover:text-indigo-400 rounded-xl transition-all border border-transparent hover:border-white/5"><Video size={18} /></button>
+              <div className="w-px h-6 bg-white/5 mx-2"></div>
+              <button className="p-3 hover:bg-white/5 hover:text-white rounded-xl transition-all"><MoreVertical size={18} /></button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 z-10 custom-scrollbar">
+          {/* Messages Area */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 z-10 custom-scrollbar bg-slate-950/20">
             
-            <div className="flex justify-center mb-6 mt-2">
-              <span className="bg-yellow-50/80 text-yellow-800/80 text-[11px] font-medium px-4 py-1.5 rounded-full shadow-sm border border-yellow-200/50 backdrop-blur-sm">
-                🔒 End-to-end encrypted discussion
-              </span>
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center gap-2 bg-slate-900/50 backdrop-blur-md px-4 py-2 rounded-xl border border-white/5 shadow-2xl">
+                <ShieldCheck size={12} className="text-indigo-400" />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Encrypted Data Link Active</span>
+              </div>
             </div>
 
             {chatHistory.map((msg, index) => {
@@ -283,65 +314,70 @@ export default function Chat() {
               const isGrouped = prevMsg && prevMsg.sender === msg.sender;
 
               return (
-                <div key={msg.id || msg._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
-                  <div className={`relative max-w-[85%] md:max-w-[70%] px-4 py-2.5 text-[15px] shadow-sm flex flex-col
+                <div key={msg.id || msg._id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 duration-300`}>
+                  <div className={`relative max-w-[85%] md:max-w-[65%] px-5 py-3.5 shadow-2xl flex flex-col transition-all group
                     ${isMe 
-                      ? `bg-indigo-600 text-white ${isGrouped ? 'rounded-2xl' : 'rounded-2xl rounded-tr-sm'}` 
-                      : `bg-white text-slate-800 border border-slate-100 ${isGrouped ? 'rounded-2xl' : 'rounded-2xl rounded-tl-sm'}`
+                      ? `bg-indigo-600 text-white ${isGrouped ? 'rounded-[1.5rem]' : 'rounded-t-[1.5rem] rounded-bl-[1.5rem] rounded-br-[0.4rem]'}` 
+                      : `bg-slate-900 text-slate-200 border border-white/5 ${isGrouped ? 'rounded-[1.5rem]' : 'rounded-t-[1.5rem] rounded-br-[1.5rem] rounded-bl-[0.4rem]'}`
                     }`}
                   >
-                    <span className="leading-relaxed whitespace-pre-wrap break-words pr-12">{msg.text}</span>
+                    <p className="text-[14px] font-medium leading-relaxed whitespace-pre-wrap break-words pr-14">{msg.text}</p>
                     
-                    <div className={`absolute bottom-1 right-2 flex items-center gap-1 ${isMe ? 'text-indigo-200' : 'text-slate-400'}`}>
-                      <span className="text-[10px] tracking-wide font-medium">{msg.time}</span>
-                      {isMe && (
-                        <CheckCheck size={14} className="text-white opacity-90" />
-                      )}
+                    <div className={`absolute bottom-2 right-3 flex items-center gap-1.5 ${isMe ? 'text-white/60' : 'text-slate-500'}`}>
+                      <span className="text-[9px] font-black tracking-tighter uppercase italic">{msg.time}</span>
+                      {isMe && <CheckCheck size={14} className="text-white/80" />}
                     </div>
                   </div>
                 </div>
               );
             })}
-            <div ref={messagesEndRef} className="h-2" />
+            <div ref={messagesEndRef} className="h-4" />
           </div>
 
-          <div className="p-4 bg-white/90 backdrop-blur-md border-t border-slate-200/60 z-10">
-            <form onSubmit={handleSendMessage} className="flex items-center gap-3 max-w-5xl mx-auto">
+          {/* Message Input Area */}
+          <div className="p-6 bg-slate-950/80 backdrop-blur-2xl border-t border-white/5 z-20">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-4 max-w-5xl mx-auto">
               
-              <button type="button" className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors shrink-0">
+              <button type="button" className="p-4 text-slate-500 hover:text-white hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/5 shrink-0">
                 <Paperclip size={20} />
               </button>
 
-              <div className="flex-1 relative flex items-center bg-slate-100/80 rounded-2xl border border-slate-200/50 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all overflow-hidden">
-                <button type="button" className="absolute left-3 p-1 text-slate-400 hover:text-yellow-500 transition-colors">
+              <div className="flex-1 relative flex items-center bg-black/40 rounded-[1.5rem] border border-white/5 focus-within:border-indigo-500/30 transition-all overflow-hidden shadow-inner">
+                <button type="button" className="absolute left-4 p-1 text-slate-600 hover:text-amber-400 transition-colors">
                   <Smile size={20} />
                 </button>
                 <input 
                   type="text" 
                   value={message} 
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type your message..." 
-                  className="w-full bg-transparent border-none py-3.5 pl-12 pr-4 text-[15px] text-slate-800 placeholder:text-slate-400 focus:outline-none"
+                  placeholder="Initiate communication..." 
+                  className="w-full bg-transparent border-none py-4.5 pl-14 pr-6 text-[14px] text-white font-bold tracking-tight placeholder:text-slate-700 focus:outline-none"
                 />
               </div>
 
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 type="submit" 
                 disabled={!message.trim()} 
-                className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white p-3.5 rounded-2xl hover:shadow-lg hover:shadow-indigo-200 disabled:opacity-50 disabled:hover:shadow-none disabled:cursor-not-allowed transition-all transform active:scale-95 shrink-0"
+                className="bg-indigo-600 text-white p-4.5 rounded-[1.5rem] shadow-2xl shadow-indigo-600/20 disabled:opacity-20 disabled:cursor-not-allowed transition-all flex items-center justify-center group shrink-0"
               >
-                <Send size={18} className="ml-0.5" />
-              </button>
+                <Send size={18} className="group-hover:translate-x-1 transition-transform" />
+              </motion.button>
             </form>
           </div>
         </div>
       );})() : (
-        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#f8fafc]">
-          <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-            <MessageSquare size={40} className="text-indigo-400" />
+        <div className="hidden md:flex flex-1 flex-col items-center justify-center bg-[#020617] relative">
+          <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h1v1H0z' fill='%23ffffff'/%3E%3C/svg%3E")` }}></div>
+          <div className="relative group">
+            <div className="absolute inset-0 bg-indigo-600/20 rounded-full blur-[80px] group-hover:blur-[100px] transition-all" />
+            <div className="w-28 h-28 bg-slate-900 rounded-[2.5rem] flex items-center justify-center mb-8 border border-white/10 relative z-10 shadow-2xl">
+              <MessageSquare size={44} className="text-indigo-500 animate-pulse" />
+            </div>
           </div>
-          <h2 className="text-2xl font-black text-slate-800 mb-2">Your Messages</h2>
-          <p className="text-slate-500 font-medium">Select a conversation to start chatting securely.</p>
+          <h2 className="text-3xl font-[1000] text-white mb-3 tracking-tighter uppercase italic relative z-10">Neural Hub</h2>
+          <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-[10px] relative z-10">Waiting for peer handshakes...</p>
         </div>
       )}
     </div>
