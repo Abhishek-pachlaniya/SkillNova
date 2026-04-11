@@ -92,15 +92,18 @@ export const getMyProjects = async (req, res) => {
 export const getEngineerProjects = async (req, res) => {
   try {
     const userId = req.user._id;
+    // Applied projects dhoondo
     const projects = await Project.find({ applications: userId }).lean();
 
     const projectsWithStatus = projects.map(project => {
+      // Is project mein current engineer ka status dhoondo
       const myApp = project.applicants.find(
         app => app.user.toString() === userId.toString()
       );
       return {
         ...project,
-        myStatus: myApp ? myApp.status : 'pending'
+        // Yahan 'hired' ya 'accepted' dono check honge frontend par
+        myStatus: myApp ? myApp.status : 'pending' 
       };
     });
 

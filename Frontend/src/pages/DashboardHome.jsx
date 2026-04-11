@@ -39,7 +39,10 @@ const DashboardHome = () => {
       }
     }
   };
-
+const inProgressCount = projects.filter(p => p.status === 'closed').length;
+const totalApplicantsCount = projects.reduce((total, p) => {
+  return total + (p.applicants ? p.applicants.length : 0);
+}, 0);
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -70,11 +73,15 @@ const DashboardHome = () => {
       </div>
 
       {/* 📊 Bento Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard icon={<Briefcase size={24}/>} label="Total Projects" value={projects.length} color="indigo" />
-        <StatCard icon={<Clock size={24}/>} label="In Progress" value="0" color="fuchsia" />
-        <StatCard icon={<Users size={24}/>} label="Total Applicants" value="0" color="cyan" />
-      </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <StatCard icon={<Briefcase size={24}/>} label="Total Projects" value={projects.length} color="indigo" />
+          
+          {/* Yahan "0" ki jagah {inProgressCount} aayega */}
+          <StatCard icon={<Clock size={24}/>} label="In Progress" value={inProgressCount} color="fuchsia" />
+          
+          {/* Yahan "0" ki jagah {totalApplicantsCount} aayega */}
+          <StatCard icon={<Users size={24}/>} label="Total Applicants" value={totalApplicantsCount} color="cyan" />
+        </div>
 
       {/* 📋 Project List Container */}
       <div className="bg-slate-950/50 rounded-[2.5rem] border border-white/5 shadow-2xl overflow-hidden backdrop-blur-md">

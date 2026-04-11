@@ -11,11 +11,12 @@ const projectSchema = new mongoose.Schema({
         ref: 'User', 
         required: true 
     },
-    status: { 
-        type: String, 
-        enum: ['open', 'in-progress', 'completed'], 
-        default: 'open' 
-    },
+    // models/Project.js mein status field ko aise update kar:
+        status: { 
+            type: String, 
+            enum: ['open', 'in-progress', 'completed', 'closed'], // 👈 'closed' add kiya
+            default: 'open' 
+        },
     // ✅ YAHAN CHANGE KIYA HAI: Ab har applicant ka apna status hoga
     // models/Project.js mein applicants array ko aisa kar de:
 applicants: [

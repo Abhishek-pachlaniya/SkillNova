@@ -1,13 +1,7 @@
 import express from 'express';
-import { getNotifications, markAllAsRead } from '../controllers/notificationController.js';
-// Tera jo bhi login check karne wala middleware hai, usko import kar lena
-// import { protect } from '../middleware/authMiddleware.js'; 
-
+import { getNotifications, markAllAsRead,getUnreadNotificationCount } from '../controllers/notificationController.js';
 const router = express.Router();
-
-// Agar middleware hai toh aise lagana: router.get('/', protect, getNotifications);
-// Abhi ke liye bina middleware ke rakh rahe hain (testing ke liye)
 router.get('/', getNotifications);
 router.put('/read', markAllAsRead);
-
+router.get('/unread-count', protect, getUnreadNotificationCount);
 export default router;

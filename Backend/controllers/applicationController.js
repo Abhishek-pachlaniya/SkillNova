@@ -88,29 +88,44 @@ export const getApplicantsByProject = async (req, res) => {
     }
 };
 
+// 🔥 YAHAN HAI ASLI FIX 🔥
 export const hireEngineerByIDs = async (req, res) => {
     try {
-        const { projectId, engineerId, status } = req.body;
+        const { projectId, engineerId } = req.body; 
 
-        await Project.updateOne(
-            { _id: projectId, "applicants.user": engineerId },
-            { $set: { "applicants.$.status": status } }
+        // 1. Seedha Project dhoondo, Application model ki zaroorat hi nahi hai
+        const project = await Project.findById(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found!" });
+
+        // 2. Project ke applicants array mein us engineer ko dhoondo
+        const applicantIndex = project.applicants.findIndex(
+            app => app.user.toString() === engineerId.toString()
         );
 
-        const application = await Application.findOneAndUpdate(
-            { project: projectId, engineer: engineerId },
-            { status },
-            { new: true }
-        );
+        if (applicantIndex === -1) {
+            // Yahi tha tera 404 Error lala!
+            return res.status(404).json({ message: "Engineer application not found in project!" });
+        }
 
-        const alertMessage = status === 'hired' 
-            ? "🎉 Badhai ho! Client ne aapko hire kar liya hai." 
-            : "Application status updated.";
+        const bidAmount = project.applicants[applicantIndex].bidAmount;
+
+        // 3. Magic Updates: Project Closed + Budget Sync + Engineer Hired
+        project.status = 'closed'; // Project close ho gaya
+        project.budget = bidAmount; // Client ka budget engineer ki bid price ban gaya
+        project.applicants[applicantIndex].status = 'hired'; // Status update
+
+        await project.save(); // DB mein save kar do
+
+        // 4. Notification Logic
+        const clientName = req.user.name || "Client";
+        const alertMessage = `🎉 Badhai ho! Client ${clientName} ne aapko "${project.title}" ke liye hire kar liya hai. Status: DEPLOYED.`;
 
         await sendNotification(req, engineerId, alertMessage, "project");
 
-        res.json({ success: true, message: "Engineer hired!" });
+        res.json({ success: true, message: "Hired successfully! Project closed & Budget synced." });
+
     } catch (error) {
+        console.error("Hiring Error:", error);
         res.status(500).json({ message: "Hiring failed!", error: error.message });
     }
 };

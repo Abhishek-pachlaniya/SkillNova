@@ -11,8 +11,23 @@ export const getNotifications = async (req, res) => {
     res.status(500).json({ message: "Notifications laane mein error aaya", error: error.message });
   }
 };
+import Notification from '../models/Notification.js'; // Apna model import kar lena
 
-// 2. Saari notifications ko "Read" (padh liya) mark karna
+export const getUnreadNotificationCount = async (req, res) => {
+    try {
+        // 🚨 Note: Apne schema ke hisaab se field check kar lena. 
+        // Main maan ke chal raha hoon tere model mein 'user' aur 'isRead'/status field hai.
+        const count = await Notification.countDocuments({ 
+            user: req.user._id, 
+            isRead: false // Agar tu unread dikhana chahta hai, warna is line ko hata dena total ke liye
+        });
+
+        res.status(200).json({ count });
+    } catch (error) {
+        console.error("Count Error:", error);
+        res.status(500).json({ message: "Count fetch failed" });
+    }
+};
 export const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(

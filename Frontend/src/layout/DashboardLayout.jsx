@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }) {
 
   const prevNotifCount = useRef(notifications?.length || 0);
 
-  // === LOGIC PRESERVED: Session Check ===
+  // === Session Check ===
   useEffect(() => {
     const hasLocalUser = localStorage.getItem('user') || localStorage.getItem('token');
     if ((!user || !user.name) && !loading && hasLocalUser) {
@@ -30,7 +30,7 @@ export default function DashboardLayout({ children }) {
     }
   }, [user, loading, checkSession]);
 
-  // === LOGIC PRESERVED: Notifications Toast ===
+  // === Notifications Toast ===
   useEffect(() => {
     if (notifications && notifications.length > prevNotifCount.current) {
       const newNotif = notifications.find(n => n.unread) || notifications[0];
@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }) {
         )}
       </AnimatePresence>
 
-      {/* === SIDEBAR: World-Class Dark Style === */}
+      {/* === SIDEBAR === */}
       <aside className={`fixed inset-y-0 left-0 z-[70] bg-slate-950 border-r border-white/5 transition-all duration-300 flex flex-col ${isMobileMenuOpen ? 'translate-x-0 w-72 shadow-[20px_0_50px_rgba(0,0,0,0.5)]' : '-translate-x-full md:translate-x-0'} ${isSidebarOpen ? 'md:w-64' : 'md:w-20'}`}>
         
         {/* Logo Section */}
@@ -147,8 +147,10 @@ export default function DashboardLayout({ children }) {
       {/* === MAIN CONTENT AREA === */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         
-        {/* === HEADER: Glassmorphism Style === */}
+        {/* === HEADER === */}
         <header className="h-20 backdrop-blur-xl bg-slate-950/50 border-b border-white/5 flex items-center justify-between px-6 md:px-10 sticky top-0 z-50">
+          
+          {/* Header Left */}
           <div className="flex items-center gap-5">
             <button onClick={() => window.innerWidth < 768 ? setMobileMenuOpen(true) : setSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-400 hover:bg-white/5 rounded-xl transition-colors border border-white/5">
               <Menu size={20} />
@@ -160,12 +162,21 @@ export default function DashboardLayout({ children }) {
             </div>
           </div>
           
+          {/* Header Right (Notifications + Profile) */}
           <div className="flex items-center gap-6">
+            
+            {/* Notifications Component */}
             <div className="relative">
               <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="p-2.5 text-slate-400 hover:bg-white/5 rounded-xl border border-white/5 relative group transition-all hover:border-indigo-500/30">
                 <Bell size={20} className="group-hover:rotate-12 transition-transform" />
+                
+                {/* 🔥 REAL COUNT BADGE */}
                 {notifications.filter(n => n.unread).length > 0 && (
-                  <span className="absolute top-2 right-2.5 bg-indigo-500 w-2 h-2 rounded-full border border-slate-950 animate-pulse"></span>
+                  <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[20px] h-[20px] px-1 bg-rose-500 text-white text-[10px] font-black rounded-full border-2 border-slate-950 shadow-[0_0_10px_rgba(244,63,94,0.4)]">
+                    {notifications.filter(n => n.unread).length > 9 
+                      ? '9+' 
+                      : notifications.filter(n => n.unread).length}
+                  </span>
                 )}
               </button>
 
@@ -183,7 +194,7 @@ export default function DashboardLayout({ children }) {
                           <button onClick={handleClearNotifications} className="text-[10px] text-indigo-400 font-black uppercase hover:text-indigo-300 transition-colors">Clear all</button>
                         )}
                       </div>
-                      <div className="max-h-[320px] overflow-y-auto">
+                      <div className="max-h-[320px] overflow-y-auto custom-scrollbar">
                         {notifications.length === 0 ? (
                           <div className="p-10 text-center flex flex-col items-center gap-3">
                             <Zap size={24} className="text-slate-700" />
@@ -204,6 +215,7 @@ export default function DashboardLayout({ children }) {
               </AnimatePresence>
             </div>
 
+            {/* Profile Component */}
             <div onClick={() => navigate('/profile')} className="flex items-center gap-4 cursor-pointer group bg-white/5 pl-4 pr-1.5 py-1.5 rounded-2xl border border-white/5 hover:border-indigo-500/30 transition-all">
               <div className="text-right hidden lg:block">
                 <p className="text-sm font-[1000] text-white tracking-tight">{userName}</p>
@@ -213,15 +225,13 @@ export default function DashboardLayout({ children }) {
                 {userAvatar ? <img src={userAvatar} className="w-full h-full object-cover" alt="" /> : <span className="font-black">{userInitial}</span>}
               </div>
             </div>
+            
           </div>
         </header>
 
-        {/* === MAIN SCROLLABLE AREA: Expanded Width Fix === */}
+        {/* === MAIN SCROLLABLE AREA === */}
         <main className="flex-1 overflow-y-auto p-6 md:p-10 relative">
-          {/* Subtle background glow for main content */}
           <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
-          
-          {/* 🚨 WIDTH FIX: Changed max-w-7xl to max-w-[1440px] and added wider padding */}
           <div className="max-w-[1440px] mx-auto relative z-10">
             {children}
           </div>
