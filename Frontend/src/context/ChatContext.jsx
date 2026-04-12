@@ -15,13 +15,16 @@ export const ChatProvider = ({ children }) => {
       const newSocket = io('http://localhost:5000');
       setSocket(newSocket);
 
-      // 🚨 FIX: Hamesha String form mein ID bhejo, Object nahi!
+      
       newSocket.emit("setupUser", String(user._id));
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
       });
-
+      
+      newSocket.on("userStatusUpdate", (data) => {
+      console.log("Status changed:", data);
+    });
       newSocket.on("newNotification", (notif) => {
         setNotifications((prev) => [notif, ...prev]);
       });

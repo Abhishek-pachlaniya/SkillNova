@@ -70,7 +70,7 @@ export default function Chat() {
     }
   }, [location.state]);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!socket || !user) return;
 
     const handleReceive = (incomingMessage) => {
@@ -91,40 +91,40 @@ export default function Chat() {
       }
     };
 
+    // ⚡ FIX: Online/Offline update logic (No more ReferenceError)
+    const handleStatusUpdate = (data) => {
+      const { userId, isOnline, lastSeen } = data;
+      
+      // A. Sidebar list update karo
+      setConversations((prev) => prev.map(conv => ({
+        ...conv,
+        participants: conv.participants.map(p => {
+          const pId = p?._id ? String(p._id) : String(p);
+          return pId === String(userId) ? { ...p, isOnline, lastSeen } : p;
+        })
+      })));
+
+      // B. ⚡ Header (Active Chat) update karo taaki time sahi ho jaye
+      setActiveContact(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          participants: prev.participants.map(p => {
+            const pId = p?._id ? String(p._id) : String(p);
+            return pId === String(userId) ? { ...p, isOnline, lastSeen } : p;
+          })
+        };
+      });
+    };
+
     socket.on("receiveMessage", handleReceive);
-    return () => socket.off("receiveMessage", handleReceive);
+    socket.on("userStatusUpdate", handleStatusUpdate);
+
+    return () => {
+      socket.off("receiveMessage", handleReceive);
+      socket.off("userStatusUpdate", handleStatusUpdate);
+    };
   }, [socket, activeContact, user]);
-
-  useEffect(() => {
-    if (activeContact && socket && user) {
-      socket.emit("joinChatRoom", activeContact._id);
-
-      const fetchMessages = async () => {
-        const token = user?.token || localStorage.getItem('token');
-        try {
-          const res = await axios.get(`http://localhost:5000/api/messages/${activeContact._id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const formattedMessages = res.data.map(m => {
-            const senderId = m.sender?._id ? String(m.sender._id) : String(m.sender);
-            return {
-              ...m,
-              sender: senderId === String(user._id) ? 'me' : 'them',
-              time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-          });
-          setChatHistory(formattedMessages);
-        } catch (error) {
-          console.error("Purane messages fetch failed", error);
-        }
-      };
-      fetchMessages();
-
-      return () => {
-        socket.emit("leaveChatRoom", activeContact._id);
-      };
-    }
-  }, [activeContact, socket, user]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -262,22 +262,21 @@ export default function Chat() {
                     </div>
                     
                     <div className="flex-1 min-w-0 pr-1">
-                      <h4 className={`font-black truncate text-[13px] tracking-tight ${isActive ? 'text-white' : 'text-slate-300'}`}>
-                        {otherUser.name}
-                      </h4>
+                      <div className="flex items-center gap-1.5">
+                        <h4 className={`font-black truncate text-[13px] tracking-tight ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                          {otherUser.name}
+                        </h4>
+                        {/* ⚡ Online Indication next to name */}
+                        {isOnline && <span className="text-[10px] text-emerald-500 font-bold animate-pulse">● Online</span>}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
-                         <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border
-                           ${isActive ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/10' : 'bg-white/5 text-slate-500 border-white/5'}`}>
-                           {otherUser.role || 'Agent'}
-                         </span>
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border
+                          ${isActive ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/10' : 'bg-white/5 text-slate-500 border-white/5'}`}>
+                          {otherUser.role || 'Agent'}
+                        </span>
                       </div>
                     </div>
-
                     <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
-                        <span className="text-[7px] font-black text-slate-600 uppercase tracking-tighter italic">
-                          {conv.updatedAt ? new Date(conv.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                        </span>
-                        
                         {conv.unreadCount > 0 && !isActive && (
                           <div className="min-w-[16px] h-[16px] px-1 bg-rose-500 text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-lg shadow-rose-500/20">
                             {conv.unreadCount > 9 ? '9+' : conv.unreadCount}
@@ -324,7 +323,11 @@ export default function Chat() {
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1 h-1 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
                     <span className={`text-[8px] font-black uppercase tracking-[0.15em] ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
-                      {isOnline ? 'Active Sync' : 'Offline Mode'}
+                         {isOnline ? 'Active Sync' : (
+                          (otherUser?.lastSeen || activeContact?.updatedAt)
+                            ? `Last seen ${new Date(otherUser?.lastSeen || activeContact?.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` 
+                            : 'Offline Mode'
+                        )}
                     </span>
                   </div>
                 </div>

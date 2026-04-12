@@ -1,17 +1,11 @@
 // sockets/socketHandler.js
 import Notification from '../models/Notification.js'; 
 import Message from '../models/Message.js'; // 👈 Naya Import: Message update karne ke liye
-
+import User from '../models/User.js';
+let onlineUsers = {};
 export const socketHandler = (io) => {
   io.on("connection", (socket) => {
     console.log("🟢 Naya user connect hua! Socket ID:", socket.id);
-
-    // 1. Setup User (Personal Room for global notifications)
-    socket.on("setupUser", (userId) => {
-      socket.join(userId);
-      console.log(`👤 User joined personal room: ${userId}`);
-    });
-
     // 2. 🆕 Join Specific Chat Room (Active Chat Logic)
     socket.on("joinChatRoom", (conversationId) => {
       socket.join(conversationId);
@@ -68,7 +62,31 @@ export const socketHandler = (io) => {
         console.error("❌ Socket Error:", error.message);
       }
     });
-
+    //online offline setup ;
+    socket.on("setupUser", async (userId) => {
+      if(!userId)return
+      socket.join(userId);
+      socket.userId = userId;
+      console.log(`👤 User online: ${userId}`);
+      onlineUsers[userId] = socket.id;
+      await User.findByIdAndUpdate(userId, { isOnline: true });
+      io.emit("getOnlineUsers", Object.keys(onlineUsers));
+      io.emit("userStatusUpdate", { userId, isOnline: true }); 
+    });
+    //offline setup 
+    socket.on("disconnect", async () => {
+      if (socket.userId) {
+        delete onlineUsers[socket.userId];
+        const lastSeen = new Date();
+        await User.findByIdAndUpdate(socket.userId, { 
+          isOnline: false, 
+          lastSeen: lastSeen 
+        });
+        io.emit("getOnlineUsers", Object.keys(onlineUsers));
+        io.emit("userStatusUpdate", { userId: socket.userId, isOnline: false, lastSeen });
+      }
+    });
+  
     socket.on("disconnect", () => {
       console.log("🔴 User chala gaya:", socket.id);
     });
