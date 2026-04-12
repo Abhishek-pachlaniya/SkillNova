@@ -1,5 +1,5 @@
 import Conversation from '../models/Conversation.js';
-
+import Message from '../models/Message.js';
 export const startOrGetConversation = async (req, res) => {
   try {
     const senderId = req.user._id; 
@@ -25,16 +25,26 @@ export const startOrGetConversation = async (req, res) => {
     res.status(500).json({ message: "Server Error: Chat room nahi ban paya" });
   }
 };
-// Naya function: Sirf wahi log dikhao jinse baat hui hai
+
+
 export const getConversations = async (req, res) => {
   try {
     const userId = req.user._id;
-    // Un conversations ko dhundo jisme ye user participant hai
     const conversations = await Conversation.find({
       participants: { $in: [userId] }
-    }).populate("participants", "name avatar title role"); // Samne wale ki info nikalne ke liye
+    }).populate("participants", "name avatar title role").lean(); // .lean() use karo modification ke liye
 
-    res.status(200).json(conversations);
+    // ⚡ Har conversation ke liye unread count nikalo
+    const conversationsWithCounts = await Promise.all(conversations.map(async (conv) => {
+      const unreadCount = await Message.countDocuments({
+        conversationId: conv._id,
+        sender: { $ne: userId }, // Maine nahi bheja, samne wale ne bheja
+        isRead: false
+      });
+      return { ...conv, unreadCount };
+    }));
+
+    res.status(200).json(conversationsWithCounts);
   } catch (error) {
     res.status(500).json({ message: "Conversations fetch nahi ho payi" });
   }

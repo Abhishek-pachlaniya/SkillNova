@@ -36,3 +36,19 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ message: "Messages fetch nahi hue bhai!" });
   }
 };
+
+export const markAsRead = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user._id;
+
+    await Message.updateMany(
+      { conversationId: chatId, sender: { $ne: userId }, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    res.status(200).json({ msg: "Messages marked as read" });
+  } catch (error) {
+    res.status(500).json({ message: "Error marking messages as read" });
+  }
+};

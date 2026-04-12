@@ -15,6 +15,7 @@ import { Server } from 'socket.io';
 import { socketHandler } from './utils/socketHandler.js';
 import conversationRoutes from './routes/conversationRoutes.js';
 import messageRoutes from './routes/messageRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 dotenv.config();
 
 // DB Connect
@@ -49,6 +50,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/search', searchRoutes);
 socketHandler(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🔥 Server & Socket started on port ${PORT}`));

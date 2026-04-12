@@ -49,6 +49,7 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/clients/:id" element={<EngineerProfileView />} />
             <Route path="/engineers" element={<Engineers />} />
             <Route path="/engineer-profile/:id" element={<EngineerProfileView />} />
             <Route path="/projects" element={<Projects />} />

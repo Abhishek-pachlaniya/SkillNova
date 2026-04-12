@@ -1,3 +1,4 @@
+// Saare imports top par
 import Notification from '../models/Notification.js';
 
 // 1. User ki saari notifications mangwana
@@ -11,15 +12,13 @@ export const getNotifications = async (req, res) => {
     res.status(500).json({ message: "Notifications laane mein error aaya", error: error.message });
   }
 };
-import Notification from '../models/Notification.js'; // Apna model import kar lena
 
+// 2. Unread notifications ka count lana
 export const getUnreadNotificationCount = async (req, res) => {
     try {
-        // 🚨 Note: Apne schema ke hisaab se field check kar lena. 
-        // Main maan ke chal raha hoon tere model mein 'user' aur 'isRead'/status field hai.
         const count = await Notification.countDocuments({ 
-            user: req.user._id, 
-            isRead: false // Agar tu unread dikhana chahta hai, warna is line ko hata dena total ke liye
+            recipient: req.user._id, // 💡 TIP: Maine yahan 'user' ko 'recipient' kar diya hai taaki baaki functions ke saath match kare
+            isRead: false 
         });
 
         res.status(200).json({ count });
@@ -28,6 +27,8 @@ export const getUnreadNotificationCount = async (req, res) => {
         res.status(500).json({ message: "Count fetch failed" });
     }
 };
+
+// 3. Sabko read mark karna
 export const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(

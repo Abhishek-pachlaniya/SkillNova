@@ -1,24 +1,25 @@
+// utils/notificationHelper.js
 import Notification from '../models/Notification.js';
 
-// Ye function 4 chize lega: request, jisko bhejna hai uski ID, message, aur type
 export const sendNotification = async (req, recipientId, text, type = 'system') => {
   try {
-    // 1. Database mein save karo (Offline walo ke liye)
+    // 1. Database mein save karo (Taaki user refresh kare tab bhi bell mein dikhe)
     const savedNotification = await Notification.create({
       recipient: recipientId,
       text: text,
       type: type
     });
 
-    // 2. Tijori se Walkie-Talkie nikalo aur Live bhej do (Online walo ke liye)
+    // 2. Sirf aur sirf us specific user ko real-time notification bhejo
     const io = req.app.get('socketio');
     if (io) {
-      // Asli app mein io.to(recipientId).emit hota hai, abhi testing ke liye open emit kar rahe hain
-      io.emit("newNotification", {
-        id: savedNotification._id,
+      // 🚨 FIX: io.emit ki jagah io.to().emit lagaya hai
+      io.to(recipientId.toString()).emit("newNotification", {
+        _id: savedNotification._id,
         text: savedNotification.text,
-        time: "Just now",
-        unread: true
+        type: savedNotification.type,
+        createdAt: savedNotification.createdAt,
+        isRead: false
       });
     }
     return true;
