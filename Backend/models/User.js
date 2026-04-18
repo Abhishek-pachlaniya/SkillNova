@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ['client', 'engineer'], default: 'engineer' },
+    isOnline: {  type: Boolean, default: false },
+    lastSeen: { type: Date, default: Date.now },
     avatar: { type: String, default: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' },
     bio: { type: String, maxLength: 500, default: '' },
     location: { type: String, default: '' },

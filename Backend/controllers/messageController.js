@@ -5,13 +5,26 @@ export const sendMessage = async (req, res) => {
   try {
     const { conversationId, text, receiverId } = req.body;
     
-    const newMessage = new Message({
+    // 1. Basic message data banaya
+    let messageData = {
       conversationId,
       sender: req.user._id,
-      text
-    });
-    
+      text: text || "" // Agar sirf file bhej raha hai, toh text khali rahega
+    };
+
+    // 2. 🔥 YAHAN KHELA HAI: Agar Multer ne koi file upload ki hai, toh uska data add karo
+    if (req.file) {
+      messageData.attachment = {
+          url: req.file.path,             // Cloudinary ka direct link
+          fileType: req.file.mimetype,    // File ka type (image/pdf)
+          fileName: req.file.originalname // Asli file ka naam
+      };
+    }
+
+    // 3. Database mein save karo
+    const newMessage = new Message(messageData);
     await newMessage.save();
+
     res.status(201).json(newMessage);
   } catch (error) {
     console.error("❌ MESSAGE SAVE ERROR:", error); 

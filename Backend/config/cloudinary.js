@@ -17,4 +17,14 @@ const storage = new CloudinaryStorage({
   },
 });
 
+const chatStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'chat_attachments', // Chat ki files is folder mein jayengi
+    allowed_formats: ['jpg', 'png', 'jpeg', 'pdf', 'doc', 'docx','mp4', 'webm', 'mov'], // PDF aur Docs bhi allow kar diye
+    resource_type: 'auto' // Ye zaroori hai taaki non-image files (PDF) bhi upload ho sakein
+  },
+});
+
 export const upload = multer({ storage });
+export const uploadChatAttachment = multer({ storage: chatStorage });

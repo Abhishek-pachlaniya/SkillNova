@@ -23,7 +23,7 @@ export const globalSearch = async (req, res) => {
 
     // 3. Projects Search
     const projects = await Project.find({
-      $or: [{ title: regex }, { description: regex }, { techStack: regex }]
+      $or: [{ title: regex }, { description: regex }, { tags: regex }]
     }).limit(4).select('title budget status');
 
     // 4. Static Pages

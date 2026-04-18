@@ -228,18 +228,99 @@ export default function DashboardLayout({ children }) {
           </div>
 
           {/* Search bar logic (Preserved) */}
-          <div className="hidden md:flex ml-auto max-w-xs w-full mr-8 relative">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search matrix..." 
-              className="w-full bg-black/40 border border-white/5 rounded-2xl py-2 pl-10 pr-10 text-xs font-medium text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
-            />
-            {isSearching && <Loader2 size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-500 animate-spin" />}
-            {/* Search dropdown logic preserved... */}
+         {/* Search bar logic */}
+<div className="hidden md:flex ml-auto max-w-sm w-full mr-8 relative">
+  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+  <input 
+    type="text" 
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    placeholder="Search matrix..." 
+    className="w-full bg-black/40 border border-white/5 rounded-2xl py-2 pl-10 pr-10 text-xs font-medium text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-all shadow-inner"
+  />
+  {isSearching && <Loader2 size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-indigo-500 animate-spin" />}
+  
+  {/* 🔥 YE WALA DROPDOWN TUNE DELETE KAR DIYA THA, ISE WAPAS LAGA 🔥 */}
+  <AnimatePresence>
+    {searchQuery.trim().length > 1 && searchResults && (
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+        className="absolute top-full mt-3 right-0 w-full md:w-[350px] max-h-[400px] overflow-y-auto custom-scrollbar bg-slate-900 border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.6)] z-[100]"
+      >
+        {(!searchResults.engineers?.length && !searchResults.clients?.length && !searchResults.projects?.length && !searchResults.pages?.length) ? (
+          <div className="p-8 text-center text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+            No matching nodes found.
           </div>
+        ) : (
+          <div className="p-3 flex flex-col gap-2">
+            
+           {/* PROJECTS / MISSIONS SECTION */}
+              {searchResults.projects?.length > 0 && (
+                <div className="bg-white/5 rounded-xl p-2">
+                  <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-indigo-400 mb-1 flex items-center gap-2">
+                    <Briefcase size={12}/> Missions
+                  </p>
+                  
+                  {searchResults.projects.map(p => (
+                    <div 
+                      key={p._id} 
+                      onClick={() => { 
+                        // 1. Pehle search bar ko khali karo taaki dropdown band ho jaye
+                        setSearchQuery(''); 
+
+                        // 2. 🔥 YE HAI MAIN LINE 🔥
+                        // React navigate ki jagah hum browser ka default link change kar rahe hain.
+                        // Isse page refresh ho jayega aur project 100% khulega.
+                        window.location.href = `/projects/${p._id}`; 
+                      }} 
+                      className="px-3 py-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <p className="text-sm font-bold text-white truncate">{p.title}</p>
+                      
+                      {/* Budget aur Status dikhao taaki user ko pata chale project kaisa hai */}
+                      <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1">
+                        ${p.budget} • {p.status}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            {/* ENGINEERS */}
+            {searchResults.engineers?.length > 0 && (
+              <div className="bg-white/5 rounded-xl p-2">
+                <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-fuchsia-400 mb-1 flex items-center gap-2"><Users size={12}/> Engineers</p>
+                {searchResults.engineers.map(e => (
+                  <div key={e._id} onClick={() => { navigate(`/engineer-profile/${e._id}`); setSearchQuery(''); }} className="px-2 py-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 overflow-hidden shrink-0">
+                      <img src={e.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${e.name}`} alt="" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{e.name}</p>
+                      <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1 truncate">{e.skills?.join(', ') || 'Node Expert'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* PLATFORM PAGES */}
+            {searchResults.pages?.length > 0 && (
+              <div className="bg-white/5 rounded-xl p-2">
+                 <p className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-cyan-400 mb-1 flex items-center gap-2"><LayoutDashboard size={12}/> Hub</p>
+                 {searchResults.pages.map(page => (
+                  <div key={page.path} onClick={() => { navigate(page.path); setSearchQuery(''); }} className="px-3 py-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors">
+                    <p className="text-xs font-black text-slate-300 uppercase tracking-widest">{page.name}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
+        )}
+      </motion.div>
+    )}
+  </AnimatePresence>
+</div>
           
           <div className="flex items-center gap-4 sm:gap-6 shrink-0">
             {/* Notifications Bell Component (Preserved) */}

@@ -1,94 +1,106 @@
 // sockets/socketHandler.js
 import Notification from '../models/Notification.js'; 
-import Message from '../models/Message.js'; // 👈 Naya Import: Message update karne ke liye
+import Message from '../models/Message.js'; 
 import User from '../models/User.js';
-let onlineUsers = {};
+
+let onlineUsers = {}; // ⚡ Users track karne ke liye global object
+
 export const socketHandler = (io) => {
   io.on("connection", (socket) => {
-    console.log("🟢 Naya user connect hua! Socket ID:", socket.id);
-    // 2. 🆕 Join Specific Chat Room (Active Chat Logic)
+    console.log("🟢 Socket Connected:", socket.id);
+
+    // 1. SETUP USER: Status Online & Identification
+    socket.on("setupUser", async (userId) => {
+      if(!userId) return;
+      const uId = String(userId);
+      socket.join(uId);
+      socket.userId = uId; // Disconnect ke liye identification
+      
+      onlineUsers[uId] = socket.id;
+
+      await User.findByIdAndUpdate(uId, { isOnline: true });
+      
+      // ⚡ Sabko update bhejo
+      io.emit("getOnlineUsers", Object.keys(onlineUsers));
+      io.emit("userStatusUpdate", { userId: uId, isOnline: true }); 
+      
+      console.log(`👤 User Online: ${uId}`);
+    });
+
     socket.on("joinChatRoom", (conversationId) => {
-      socket.join(conversationId);
-      console.log(`💬 User joined chat room: ${conversationId}`);
+      socket.join(String(conversationId));
     });
 
-    // 3. 🆕 Leave Chat Room (Jab user chat band kare)
     socket.on("leaveChatRoom", (conversationId) => {
-      socket.leave(conversationId);
-      console.log(`🚪 User left chat room: ${conversationId}`);
+      socket.leave(String(conversationId));
     });
 
-    // 4. SEND MESSAGE LOGIC (Refined)
+    // 2. ⚡ SEND MESSAGE: Double-Echo aur Delivery Fix
     socket.on("sendMessage", async (messageData) => {
-      const { conversationId, receiverId, text, senderName, senderId, _id } = messageData;
-
-      // ⚡ Check karo: Kya receiver abhi is chat room mein active hai?
-      const room = io.sockets.adapter.rooms.get(conversationId);
-      const isReceiverInRoom = room && room.size > 1; // 1 se zyada matlab dono wahi hain
+      const { conversationId, receiverId, _id, senderName, text } = messageData;
+      const cId = String(conversationId);
+      const rId = String(receiverId);
 
       try {
+        // Check karo: Kya receiver abhi is chat room mein active hai?
+        const room = io.sockets.adapter.rooms.get(cId);
+        const isReceiverInRoom = room && room.size > 1;
+
         if (isReceiverInRoom) {
-          // ✅ Case A: Receiver chat khol kar baitha hai
-          // Database mein message ko 'Read' mark karo turant
+          // ✅ Case A: Dono chat room mein hain
           await Message.findByIdAndUpdate(_id, { isRead: true });
           
-          // Seedha room mein message bhejo (count badhane ki zarurat nahi)
-          io.to(conversationId).emit("receiveMessage", { ...messageData, isRead: true });
-        } else {
-          // ❌ Case B: Receiver kisi aur page par hai ya offline hai
+          // ⚡ socket.to() sirf room ke BAAKI logo (receiver) ko bhejega
+          // Isse double-message (echo) nahi hoga
+          socket.to(cId).emit("receiveMessage", { ...messageData, isRead: true });
           
-          // 1. Receiver ke personal room mein message bhejo (Sidebar update ke liye)
-          io.to(receiverId).emit("receiveMessage", { ...messageData, isRead: false });
+          console.log(`✅ Message delivered & read in room: ${cId}`);
+        } else {
+          // ❌ Case B: Receiver chat ke bahar hai ya offline hai
+          
+          // Sidebar update ke liye uske personal room mein bhejo
+          io.to(rId).emit("receiveMessage", { ...messageData, isRead: false });
 
-          // 2. Notification save karo (Notification Bell ke liye)
+          // Notification create karo
           const savedNotif = await Notification.create({
             recipient: receiverId, 
             text: `💬 ${senderName}: ${text.substring(0, 30)}...`,
             type: 'message'
           });
 
-          // 3. Receiver ko count update karne ke liye event bhejo
-          io.to(receiverId).emit("newNotification", {
-            _id: savedNotif._id,
-            conversationId: conversationId, 
-            senderId: senderId,
-            text: savedNotif.text,
+          io.to(rId).emit("newNotification", { 
+            _id: savedNotif._id, 
+            conversationId: cId, 
+            text: savedNotif.text, 
             type: 'message',
             isRead: false,
             createdAt: new Date()
           });
+          
+          console.log(`📩 Message sent to personal room (Offline/Other page): ${rId}`);
         }
       } catch (error) {
         console.error("❌ Socket Error:", error.message);
       }
     });
-    //online offline setup ;
-    socket.on("setupUser", async (userId) => {
-      if(!userId)return
-      socket.join(userId);
-      socket.userId = userId;
-      console.log(`👤 User online: ${userId}`);
-      onlineUsers[userId] = socket.id;
-      await User.findByIdAndUpdate(userId, { isOnline: true });
-      io.emit("getOnlineUsers", Object.keys(onlineUsers));
-      io.emit("userStatusUpdate", { userId, isOnline: true }); 
-    });
-    //offline setup 
+
+    // 3. DISCONNECT: Status Offline & Cleanup
     socket.on("disconnect", async () => {
       if (socket.userId) {
         delete onlineUsers[socket.userId];
+        
         const lastSeen = new Date();
         await User.findByIdAndUpdate(socket.userId, { 
           isOnline: false, 
           lastSeen: lastSeen 
         });
+
+        // Updated status broadcast karo
         io.emit("getOnlineUsers", Object.keys(onlineUsers));
         io.emit("userStatusUpdate", { userId: socket.userId, isOnline: false, lastSeen });
+        
+        console.log(`🔴 User Offline: ${socket.userId}`);
       }
-    });
-  
-    socket.on("disconnect", () => {
-      console.log("🔴 User chala gaya:", socket.id);
     });
   });
 };

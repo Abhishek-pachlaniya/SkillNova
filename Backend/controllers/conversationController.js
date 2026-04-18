@@ -8,7 +8,7 @@ export const startOrGetConversation = async (req, res) => {
     // 1. Check karo kya pehle se room hai? Aur usme naam/photo POPULATE karo
     let chat = await Conversation.findOne({
       participants: { $all: [senderId, receiverId] }
-    }).populate("participants", "name avatar role"); // 🚨 NAYA: Naam aur photo sath lao
+    }).populate("participants", "name avatar role "); // 🚨 NAYA: Naam aur photo sath lao
 
     // 2. Agar nahi hai, toh naya banao
     if (!chat) {
@@ -32,7 +32,7 @@ export const getConversations = async (req, res) => {
     const userId = req.user._id;
     const conversations = await Conversation.find({
       participants: { $in: [userId] }
-    }).populate("participants", "name avatar title role").lean(); // .lean() use karo modification ke liye
+    }).populate("participants", "name avatar title role lastSeen isOnline").lean(); // .lean() use karo modification ke liye
 
     // ⚡ Har conversation ke liye unread count nikalo
     const conversationsWithCounts = await Promise.all(conversations.map(async (conv) => {
